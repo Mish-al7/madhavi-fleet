@@ -78,7 +78,7 @@ export default function AddExpenseModal({ onClose, onSave, vehicles, initialData
                         </div>
                     </div>
 
-                    {/* Description */}
+                    {/* Descriptions */}
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
                         <input
