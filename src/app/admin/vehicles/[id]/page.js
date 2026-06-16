@@ -33,7 +33,15 @@ export default function VehicleDetailPage() {
             if (res.ok) {
                 const data = await res.json();
                 setVehicle(data);
-                setEditData({ vehicle_no: data.vehicle_no, status: data.status, nickname: data.nickname });
+                setEditData({
+                    vehicle_no: data.vehicle_no,
+                    status: data.status,
+                    nickname: data.nickname || '',
+                    vehicle_name: data.vehicle_name || '',
+                    seats: data.seats || '',
+                    ac_type: data.ac_type || 'Non-AC',
+                    bus_type: data.bus_type || 'Service Bus'
+                });
             } else {
                 setError('Vehicle not found');
             }
@@ -98,40 +106,116 @@ export default function VehicleDetailPage() {
                     </Link>
                     <div>
                         {isEditing ? (
-                            <div className="flex flex-col gap-2">
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        className="bg-slate-900 border border-slate-700 text-white px-2 py-1 rounded text-xl font-bold"
-                                        value={editData.vehicle_no}
-                                        onChange={e => setEditData({ ...editData, vehicle_no: e.target.value.toUpperCase() })}
-                                    />
-                                    <select
-                                        className="bg-slate-900 border border-slate-700 text-white px-2 py-1 rounded"
-                                        value={editData.status}
-                                        onChange={e => setEditData({ ...editData, status: e.target.value })}
-                                    >
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
-                                    </select>
+                            <div className="flex flex-col gap-3 bg-slate-900/50 p-4 border border-slate-800 rounded-xl mt-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-400 uppercase">Vehicle Number</label>
+                                        <input
+                                            className="w-full bg-slate-950 border border-slate-700 text-white px-3 py-2 rounded-lg text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            value={editData.vehicle_no}
+                                            onChange={e => setEditData({ ...editData, vehicle_no: e.target.value.toUpperCase() })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-400 uppercase">Vehicle Name</label>
+                                        <input
+                                            className="w-full bg-slate-950 border border-slate-700 text-white px-3 py-2 rounded-lg text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            placeholder="Vehicle Name"
+                                            value={editData.vehicle_name}
+                                            onChange={e => setEditData({ ...editData, vehicle_name: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
-                                <input
-                                    className="bg-slate-900 border border-slate-700 text-white px-2 py-1 rounded text-sm w-full"
-                                    placeholder="Nickname"
-                                    value={editData.nickname || ''}
-                                    onChange={e => setEditData({ ...editData, nickname: e.target.value })}
-                                />
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-400 uppercase">Seat Capacity</label>
+                                        <input
+                                            type="number"
+                                            className="w-full bg-slate-950 border border-slate-700 text-white px-3 py-2 rounded-lg text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            placeholder="Capacity"
+                                            value={editData.seats}
+                                            onChange={e => setEditData({ ...editData, seats: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-400 uppercase">AC Status</label>
+                                        <select
+                                            className="w-full bg-slate-950 border border-slate-700 text-white px-3 py-2 rounded-lg text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            value={editData.ac_type}
+                                            onChange={e => setEditData({ ...editData, ac_type: e.target.value })}
+                                        >
+                                            <option value="Non-AC">Non-AC</option>
+                                            <option value="AC">AC</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-400 uppercase">Bus Type</label>
+                                        <select
+                                            className="w-full bg-slate-950 border border-slate-700 text-white px-3 py-2 rounded-lg text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            value={editData.bus_type}
+                                            onChange={e => setEditData({ ...editData, bus_type: e.target.value })}
+                                        >
+                                            <option value="Service Bus">Service Bus</option>
+                                            <option value="Tour Bus">Tour Bus</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-400 uppercase">Nickname (Optional)</label>
+                                        <input
+                                            className="w-full bg-slate-950 border border-slate-700 text-white px-3 py-2 rounded-lg text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            placeholder="Nickname"
+                                            value={editData.nickname || ''}
+                                            onChange={e => setEditData({ ...editData, nickname: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-400 uppercase">Status</label>
+                                        <select
+                                            className="w-full bg-slate-950 border border-slate-700 text-white px-3 py-2 rounded-lg text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            value={editData.status}
+                                            onChange={e => setEditData({ ...editData, status: e.target.value })}
+                                        >
+                                            <option value="active">Active</option>
+                                            <option value="inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         ) : (
-                            <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-3">
-                                    <h1 className="text-2xl font-bold text-white">{vehicle.vehicle_no}</h1>
-                                    <span className={`text-xs px-2 py-1 rounded-full ${vehicle.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                            <div className="flex flex-col gap-2">
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <h1 className="text-2xl font-bold text-white uppercase">{vehicle.vehicle_no}</h1>
+                                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase ${vehicle.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
                                         {vehicle.status}
                                     </span>
                                 </div>
-                                {vehicle.nickname && (
-                                    <p className="text-slate-400 text-lg">{vehicle.nickname}</p>
+                                {vehicle.vehicle_name && (
+                                    <p className="text-slate-200 text-lg font-semibold">{vehicle.vehicle_name}</p>
                                 )}
+                                {vehicle.nickname && (
+                                    <p className="text-slate-400 text-sm italic">Nickname: {vehicle.nickname}</p>
+                                )}
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                    {vehicle.seats ? (
+                                        <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-bold px-3 py-1 rounded-lg">
+                                            {vehicle.seats} Seats
+                                        </span>
+                                    ) : null}
+                                    {vehicle.ac_type ? (
+                                        <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-bold px-3 py-1 rounded-lg">
+                                            {vehicle.ac_type}
+                                        </span>
+                                    ) : null}
+                                    {vehicle.bus_type ? (
+                                        <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold px-3 py-1 rounded-lg">
+                                            {vehicle.bus_type}
+                                        </span>
+                                    ) : null}
+                                </div>
                             </div>
                         )}
                         <p className="text-slate-400 text-sm">Created {formatDate(vehicle.createdAt)}</p>

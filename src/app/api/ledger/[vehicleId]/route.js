@@ -84,15 +84,36 @@ export async function GET(req, { params }) {
                     createdAt: 1,
                     is_admin_expense: { $literal: false },
                     is_company_level: { $literal: false },
-                    // specific fields requested to be summed
+                    trip_type: { $ifNull: ["$trip_type", "regular"] },
+                    cleaner_name: { $ifNull: ["$cleaner_name", ""] },
+                    cleaner_payment: { $ifNull: ["$cleaner_payment", 0] },
+                    driver_payment: { $ifNull: ["$driver_payment", 0] },
+                    seats_filled: { $ifNull: ["$seats_filled", 0] },
+                    toll: { $ifNull: ["$toll", 0] },
+                    office_offline_collection: { $ifNull: ["$office_offline_collection", 0] },
+                    online_booking_collection: { $ifNull: ["$online_booking_collection", 0] },
                     total_expenses: {
-                        $add: [
-                            { $ifNull: ["$fuel", 0] },
-                            { $ifNull: ["$fasttag", 0] },
-                            { $ifNull: ["$service", 0] },
-                            { $ifNull: ["$driver_allowance", 0] },
-                            { $ifNull: ["$adblue", 0] }
-                        ]
+                        $cond: {
+                            if: { $eq: ["$trip_type", "nightly"] },
+                            then: {
+                                $add: [
+                                    { $ifNull: ["$fuel", 0] },
+                                    { $ifNull: ["$toll", 0] },
+                                    { $ifNull: ["$driver_payment", 0] },
+                                    { $ifNull: ["$cleaner_payment", 0] },
+                                    { $ifNull: ["$other_expense", 0] }
+                                ]
+                            },
+                            else: {
+                                $add: [
+                                    { $ifNull: ["$fuel", 0] },
+                                    { $ifNull: ["$fasttag", 0] },
+                                    { $ifNull: ["$service", 0] },
+                                    { $ifNull: ["$driver_allowance", 0] },
+                                    { $ifNull: ["$adblue", 0] }
+                                ]
+                            }
+                        }
                     }
                 }
             },

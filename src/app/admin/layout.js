@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, FileText, Settings, LogOut, Truck, Users, CalendarCheck, Wallet, Cog, BarChart2, PieChart, Menu, X, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, FileText, Settings, LogOut, Truck, Users, CalendarCheck, Wallet, Cog, BarChart2, PieChart, Menu, X, ChevronDown, MapPin } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -22,7 +22,9 @@ const SECTIONS = [
         title: 'Operations',
         items: [
             { href: '/admin/bookings', icon: CalendarCheck, label: 'Bookings' },
+            { href: '/admin/trips', icon: Truck, label: 'Tour Trips' },
             { href: '/admin/trip-sheets', icon: FileText, label: 'Trip Sheets' },
+            { href: '/admin/nightly-service', icon: FileText, label: 'Nightly Services' },
             { href: '/admin/invoices', icon: FileText, label: 'Invoices' }
         ]
     },
@@ -31,7 +33,8 @@ const SECTIONS = [
         title: 'Fleet Management',
         items: [
             { href: '/admin/vehicles', icon: Truck, label: 'Vehicles' },
-            { href: '/admin/drivers', icon: Users, label: 'Drivers' }
+            { href: '/admin/drivers', icon: Users, label: 'Drivers' },
+            { href: '/admin/routes', icon: MapPin, label: 'Routes' }
         ]
     },
     {

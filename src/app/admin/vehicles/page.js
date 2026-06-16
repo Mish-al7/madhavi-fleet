@@ -15,6 +15,10 @@ export default function VehiclesPage() {
     const [formData, setFormData] = useState({
         vehicle_no: '',
         nickname: '',
+        vehicle_name: '',
+        seats: '',
+        ac_type: 'Non-AC',
+        bus_type: 'Service Bus',
         status: 'active'
     });
 
@@ -54,7 +58,15 @@ export default function VehiclesPage() {
 
             // Success - refresh list and reset form
             await fetchVehicles();
-            setFormData({ vehicle_no: '', nickname: '', status: 'active' });
+            setFormData({
+                vehicle_no: '',
+                nickname: '',
+                vehicle_name: '',
+                seats: '',
+                ac_type: 'Non-AC',
+                bus_type: 'Service Bus',
+                status: 'active'
+            });
             setShowForm(false);
         } catch (err) {
             setError(err.message);
@@ -110,7 +122,64 @@ export default function VehiclesPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                                    Nickname <span className="text-slate-500 text-xs font-normal">(Optional)</span>
+                                    Vehicle Name
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.vehicle_name}
+                                    onChange={(e) => setFormData({ ...formData, vehicle_name: e.target.value })}
+                                    required
+                                    placeholder="e.g. Madhavi Express"
+                                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Seat Capacity
+                                </label>
+                                <input
+                                    type="number"
+                                    value={formData.seats}
+                                    onChange={(e) => setFormData({ ...formData, seats: e.target.value })}
+                                    placeholder="e.g. 40"
+                                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    AC Status
+                                </label>
+                                <select
+                                    value={formData.ac_type}
+                                    onChange={(e) => setFormData({ ...formData, ac_type: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="Non-AC">Non-AC</option>
+                                    <option value="AC">AC</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Bus Type
+                                </label>
+                                <select
+                                    value={formData.bus_type}
+                                    onChange={(e) => setFormData({ ...formData, bus_type: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="Service Bus">Service Bus</option>
+                                    <option value="Tour Bus">Tour Bus</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Nickname <span className="text-slate-500 text-xs font-normal">(Optional Extra)</span>
                                 </label>
                                 <input
                                     type="text"
@@ -120,20 +189,19 @@ export default function VehiclesPage() {
                                     className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
-                                Status
-                            </label>
-                            <select
-                                value={formData.status}
-                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Status
+                                </label>
+                                <select
+                                    value={formData.status}
+                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
                         </div>
 
                         <button
@@ -168,13 +236,31 @@ export default function VehiclesPage() {
                             </div>
                             <div className="flex-1">
                                 <h3 className="font-bold text-lg text-white group-hover:text-blue-400 transition-colors uppercase">{vehicle.vehicle_no}</h3>
-                                {vehicle.nickname && (
-                                    <p className="text-slate-400 text-sm">{vehicle.nickname}</p>
+                                {vehicle.vehicle_name && (
+                                    <p className="text-slate-200 text-sm font-semibold">{vehicle.vehicle_name}</p>
                                 )}
-                                <div className="flex items-center gap-2 mt-1">
+                                {vehicle.nickname && (
+                                    <p className="text-slate-400 text-xs italic">{vehicle.nickname}</p>
+                                )}
+                                <div className="flex flex-wrap items-center gap-2 mt-2">
                                     <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-md ${vehicle.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-400'}`}>
                                         {vehicle.status}
                                     </span>
+                                    {vehicle.seats ? (
+                                        <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                                            {vehicle.seats} Seats
+                                        </span>
+                                    ) : null}
+                                    {vehicle.ac_type ? (
+                                        <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                                            {vehicle.ac_type}
+                                        </span>
+                                    ) : null}
+                                    {vehicle.bus_type ? (
+                                        <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                                            {vehicle.bus_type}
+                                        </span>
+                                    ) : null}
                                     {vehicle.next_service_date && (
                                         <span className="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-[10px] font-bold px-2 py-0.5 rounded-md">
                                             Service Follow-up: {formatDate(vehicle.next_service_date)}

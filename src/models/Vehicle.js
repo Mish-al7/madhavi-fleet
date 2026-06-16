@@ -11,6 +11,24 @@ const VehicleSchema = new mongoose.Schema({
         type: String,
         trim: true,
     },
+    vehicle_name: {
+        type: String,
+        trim: true,
+    },
+    seats: {
+        type: Number,
+        default: 0,
+    },
+    ac_type: {
+        type: String,
+        enum: ['AC', 'Non-AC'],
+        default: 'Non-AC',
+    },
+    bus_type: {
+        type: String,
+        enum: ['Tour Bus', 'Service Bus'],
+        default: 'Service Bus',
+    },
     company_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Company',
