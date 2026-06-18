@@ -237,29 +237,30 @@ export default function AdminLayout({ children }) {
                             </div>
                         );
                     })}
-
-                    <div className="mt-auto pt-4 md:border-t border-slate-800 flex-shrink-0">
-                        {session?.user && (
-                            <div className="px-3 py-1.5 mb-2 flex items-center gap-2 bg-slate-800/20 rounded-lg border border-slate-800/40">
-                                <div className="w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold flex-shrink-0">
-                                    {(session.user.name || 'A')[0].toUpperCase()}
-                                </div>
-                                <div className="flex flex-col min-w-0">
-                                    <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider leading-none">Admin</span>
-                                    <span className="text-xs font-medium text-slate-300 truncate mt-0.5 leading-none">{session.user.name || 'Admin User'}</span>
-                                </div>
-                            </div>
-                        )}
-
-                        <button
-                            onClick={() => signOut({ callbackUrl: '/auth/signin' })}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all"
-                        >
-                            <LogOut size={20} />
-                            <span className="font-medium text-sm">Sign Out</span>
-                        </button>
-                    </div>
                 </nav>
+
+                {/* User Info + Logout — always pinned at bottom of sidebar */}
+                <div className="flex-shrink-0 border-t border-slate-800 px-4 py-3">
+                    {session?.user && (
+                        <div className="px-3 py-1.5 mb-2 flex items-center gap-2 bg-slate-800/20 rounded-lg border border-slate-800/40">
+                            <div className="w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold flex-shrink-0">
+                                {(session.user.name || 'A')[0].toUpperCase()}
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider leading-none">Admin</span>
+                                <span className="text-xs font-medium text-slate-300 truncate mt-0.5 leading-none">{session.user.name || 'Admin User'}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    <button
+                        onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all"
+                    >
+                        <LogOut size={20} />
+                        <span className="font-medium text-sm">Sign Out</span>
+                    </button>
+                </div>
             </aside>
 
             {/* Main Content */}
