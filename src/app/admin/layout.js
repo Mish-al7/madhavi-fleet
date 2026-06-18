@@ -168,7 +168,7 @@ export default function AdminLayout({ children }) {
             )}
 
             {/* Sidebar */}
-            <aside className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-slate-900 border-r border-slate-800 flex-shrink-0 flex flex-col z-40 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+            <aside className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-slate-900 border-r border-slate-800 flex-shrink-0 flex flex-col overflow-hidden z-40 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
                 <div className="p-6 hidden md:block flex-shrink-0 border-b border-slate-800/60 mb-2">
                     <div className="flex justify-between items-center">
                         <Link href="/admin/summary" className="flex items-center">
