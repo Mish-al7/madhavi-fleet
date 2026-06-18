@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileText, Plus, Edit2, Trash2, Check, X, Calendar, Truck, MapPin, User, Users, DollarSign, Wallet, ArrowRight } from 'lucide-react';
 import { formatDate } from '@/lib/dateUtils';
 
@@ -14,22 +14,60 @@ export default function AdminTripsPage() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [isCustomDriver, setIsCustomDriver] = useState(false);
+    const [expandedRows, setExpandedRows] = useState({});
+    const [quickPaymentDates, setQuickPaymentDates] = useState({});
+    const [recordingPayment, setRecordingPayment] = useState({});
+
+    const toggleRow = (id) => {
+        setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    const handleRecordPayment = async (e, tripId, customDate) => {
+        e.stopPropagation();
+        setRecordingPayment(prev => ({ ...prev, [tripId]: true }));
+        try {
+            const dateToSubmit = customDate || new Date().toISOString().split('T')[0];
+            const res = await fetch(`/api/trips/${tripId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    payment_status: 'received',
+                    payment_date: dateToSubmit
+                })
+            });
+
+            if (res.ok) {
+                await fetchTrips();
+            } else {
+                const json = await res.json();
+                alert(json.error || 'Failed to record payment');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('An error occurred');
+        } finally {
+            setRecordingPayment(prev => ({ ...prev, [tripId]: false }));
+        }
+    };
 
     const [formData, setFormData] = useState({
         trip_date: new Date().toISOString().split('T')[0],
         vehicle_id: '',
         driver_id: '',
         actual_driver_name: '',
+        cleaner_name: '',
         trip_route: '',
         income: '',
+        payment_status: 'pay_later',
+        payment_date: new Date().toISOString().split('T')[0],
         fuel: '',
         fasttag: '',
         driver_allowance: '',
+        cleaner_payment: '',
         service: '',
         adblue: '',
         grease: '',
         air: '',
-        deposit_to_kdr_bank: '',
         other_expense: '',
         notes: ''
     });
@@ -83,10 +121,13 @@ export default function AdminTripsPage() {
 
         // Parse numerical fields
         const submissionData = { ...formData };
+        submissionData.payment_status = formData.payment_status || 'pay_later';
+        submissionData.payment_date = formData.payment_status === 'pay_later' ? null : (formData.payment_date || new Date());
+        
         const numericFields = [
-            'income', 'fuel', 'fasttag', 'driver_allowance',
+            'income', 'fuel', 'fasttag', 'driver_allowance', 'cleaner_payment',
             'service', 'adblue', 'grease', 'air',
-            'deposit_to_kdr_bank', 'other_expense'
+            'other_expense'
         ];
         numericFields.forEach(field => {
             submissionData[field] = submissionData[field] === '' ? 0 : Number(submissionData[field]);
@@ -131,16 +172,19 @@ export default function AdminTripsPage() {
             vehicle_id: trip.vehicle_id?._id || trip.vehicle_id || '',
             driver_id: trip.driver_id?._id || trip.driver_id || '',
             actual_driver_name: trip.actual_driver_name || '',
+            cleaner_name: trip.cleaner_name || '',
             trip_route: trip.trip_route || '',
-            income: trip.income || '',
+            income: trip.trip_income !== undefined ? trip.trip_income : (trip.income || ''),
+            payment_status: trip.payment_status || 'received',
+            payment_date: trip.payment_date ? new Date(trip.payment_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             fuel: trip.fuel || '',
             fasttag: trip.fasttag || '',
             driver_allowance: trip.driver_allowance || '',
+            cleaner_payment: trip.cleaner_payment || '',
             service: trip.service || '',
             adblue: trip.adblue || '',
             grease: trip.grease || '',
             air: trip.air || '',
-            deposit_to_kdr_bank: trip.deposit_to_kdr_bank || '',
             other_expense: trip.other_expense || '',
             notes: trip.notes || ''
         });
@@ -171,16 +215,19 @@ export default function AdminTripsPage() {
             vehicle_id: '',
             driver_id: '',
             actual_driver_name: '',
+            cleaner_name: '',
             trip_route: '',
             income: '',
+            payment_status: 'pay_later',
+            payment_date: new Date().toISOString().split('T')[0],
             fuel: '',
             fasttag: '',
             driver_allowance: '',
+            cleaner_payment: '',
             service: '',
             adblue: '',
             grease: '',
             air: '',
-            deposit_to_kdr_bank: '',
             other_expense: '',
             notes: ''
         });
@@ -197,7 +244,7 @@ export default function AdminTripsPage() {
     // Live totals computation inside form
     const liveExpense = [
         'fuel', 'fasttag', 'driver_allowance', 'service',
-        'adblue', 'grease', 'air', 'deposit_to_kdr_bank', 'other_expense'
+        'adblue', 'grease', 'air', 'other_expense'
     ].reduce((sum, field) => sum + (Number(formData[field]) || 0), 0);
 
     if (loading && trips.length === 0) {
@@ -256,7 +303,7 @@ export default function AdminTripsPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Group 1: Core details */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                             <div>
                                 <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Date</label>
                                 <input
@@ -278,7 +325,7 @@ export default function AdminTripsPage() {
                                 >
                                     <option value="" disabled>Select Vehicle</option>
                                     {vehicles.map(v => (
-                                        <option key={v._id} value={v._id}>{v.vehicle_no} {v.vehicle_name ? `(${v.vehicle_name})` : ''}</option>
+                                        <option key={v._id} value={v._id}>{v.vehicle_no} {v.vehicle_name ? `(${v.vehicle_name})` : ''}{v.nickname ? ` - ${v.nickname}` : ''}</option>
                                     ))}
                                 </select>
                             </div>
@@ -332,6 +379,17 @@ export default function AdminTripsPage() {
                                     </select>
                                 )}
                             </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Cleaner Name/Details</label>
+                                <input
+                                    type="text"
+                                    placeholder="Cleaner Name"
+                                    value={formData.cleaner_name}
+                                    onChange={(e) => setFormData({ ...formData, cleaner_name: e.target.value })}
+                                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                />
+                            </div>
                         </div>
 
                         {/* Group 2: Financial Details */}
@@ -362,7 +420,7 @@ export default function AdminTripsPage() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div>
                                     <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1.5">FastTag / Tolls</label>
                                     <input
@@ -384,6 +442,16 @@ export default function AdminTripsPage() {
                                     />
                                 </div>
                                 <div>
+                                    <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1.5">Cleaner Allowance (Bata)</label>
+                                    <input
+                                        type="number"
+                                        placeholder="0"
+                                        value={formData.cleaner_payment}
+                                        onChange={(e) => setFormData({ ...formData, cleaner_payment: e.target.value })}
+                                        className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
+                                    />
+                                </div>
+                                <div>
                                     <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1.5">Workshop Service</label>
                                     <input
                                         type="number"
@@ -395,7 +463,7 @@ export default function AdminTripsPage() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div>
                                     <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1.5">AdBlue</label>
                                     <input
@@ -426,27 +494,14 @@ export default function AdminTripsPage() {
                                         className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
                                     />
                                 </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Deposit to KDR Bank</label>
-                                    <input
-                                        type="number"
-                                        placeholder="0"
-                                        value={formData.deposit_to_kdr_bank}
-                                        onChange={(e) => setFormData({ ...formData, deposit_to_kdr_bank: e.target.value })}
-                                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Other Expenses</label>
+                                    <label className="block text-[10px] font-semibold text-slate-400 uppercase mb-1.5">Other Expenses</label>
                                     <input
                                         type="number"
                                         placeholder="0"
                                         value={formData.other_expense}
                                         onChange={(e) => setFormData({ ...formData, other_expense: e.target.value })}
-                                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
+                                        className="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
                                     />
                                 </div>
                             </div>
@@ -481,6 +536,36 @@ export default function AdminTripsPage() {
                                     {(Number(formData.income) || 0) - liveExpense >= 0 ? '+' : ''}₹{((Number(formData.income) || 0) - liveExpense).toLocaleString()}
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-slate-900/50 p-3 rounded-xl border border-slate-800">
+                            <div className="flex items-center gap-2.5">
+                                <input
+                                    type="checkbox"
+                                    id="admin_trip_payment_status"
+                                    name="payment_status"
+                                    checked={formData.payment_status === 'received'}
+                                    onChange={(e) => setFormData(prev => ({
+                                        ...prev,
+                                        payment_status: e.target.checked ? 'received' : 'pay_later'
+                                    }))}
+                                    className="w-5 h-5 rounded border-slate-700 bg-slate-800/50 text-blue-500 focus:ring-blue-500/50 focus:ring-2 cursor-pointer"
+                                />
+                                <label htmlFor="admin_trip_payment_status" className="text-sm font-semibold text-slate-300 select-none cursor-pointer">
+                                    Payment Received
+                                </label>
+                            </div>
+                            {formData.payment_status === 'received' && (
+                                <div className="flex-1">
+                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Payment Date</label>
+                                    <input
+                                        type="date"
+                                        value={formData.payment_date}
+                                        onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })}
+                                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex gap-3 justify-end border-t border-slate-850 pt-4">
@@ -552,86 +637,344 @@ export default function AdminTripsPage() {
                     <h3 className="text-lg font-bold text-white">Logged Tour Trips ({trips.length})</h3>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-900/50 text-slate-400 text-xs uppercase tracking-wider whitespace-nowrap">
-                                <th className="p-4 border-b border-slate-800 font-semibold">Date / Vehicle</th>
-                                <th className="p-4 border-b border-slate-800 font-semibold">Route</th>
-                                <th className="p-4 border-b border-slate-800 font-semibold">Driver</th>
-                                <th className="p-4 border-b border-slate-800 text-right font-semibold">Income</th>
-                                <th className="p-4 border-b border-slate-800 text-right font-semibold">Expenses</th>
-                                <th className="p-4 border-b border-slate-800 text-right font-semibold">Net Profit</th>
-                                <th className="p-4 border-b border-slate-800 text-center font-semibold">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800 text-sm text-slate-300 whitespace-nowrap">
-                            {trips.map(trip => {
-                                const profit = (trip.income || 0) - (trip.total_expenses || 0);
-                                return (
-                                    <tr key={trip._id} className="hover:bg-slate-800/30 transition-colors">
-                                        <td className="p-4">
-                                            <div className="font-semibold text-white flex items-center gap-1.5">
+                <div>
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-900/50 text-slate-400 text-xs uppercase tracking-wider whitespace-nowrap">
+                                    <th className="px-3 py-3 border-b border-slate-800 font-semibold">Date / Vehicle</th>
+                                    <th className="px-3 py-3 border-b border-slate-800 font-semibold">Route</th>
+                                    <th className="px-3 py-3 border-b border-slate-800 font-semibold">Crew</th>
+                                    <th className="px-3 py-3 border-b border-slate-800 text-right font-semibold">Income</th>
+                                    <th className="px-3 py-3 border-b border-slate-800 text-right font-semibold">Expenses</th>
+                                    <th className="px-3 py-3 border-b border-slate-800 text-right font-semibold">Net Profit</th>
+                                    <th className="px-3 py-3 border-b border-slate-800 text-center font-semibold">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800 text-sm text-slate-300 whitespace-nowrap">
+                                {trips.map(trip => {
+                                    const profit = (trip.income || 0) - (trip.total_expenses || 0);
+                                    return (
+                                        <React.Fragment key={trip._id}>
+                                            <tr
+                                                onClick={() => toggleRow(trip._id)}
+                                                className="hover:bg-slate-800/30 transition-colors cursor-pointer group"
+                                            >
+                                                <td className="px-3 py-3">
+                                                    <div className="font-semibold text-white flex items-center gap-1.5">
+                                                        <Calendar size={13} className="text-slate-500" />
+                                                        {formatDate(trip.trip_date)}
+                                                    </div>
+                                                    <div className="text-xs text-slate-400 flex items-center gap-1 mt-1 font-mono uppercase">
+                                                        <Truck size={12} className="text-slate-500" />
+                                                        {trip.vehicle_id?.vehicle_no || 'Unknown'} {trip.vehicle_id?.vehicle_name ? `(${trip.vehicle_id.vehicle_name})` : ''}
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    <div className="font-medium text-white flex items-center gap-1.5">
+                                                        <MapPin size={13} className="text-slate-500" />
+                                                        {trip.trip_route}
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    <div className="flex items-center gap-1 font-semibold text-white">
+                                                        <User size={13} className="text-slate-500" />
+                                                        <span>Dr: {trip.actual_driver_name || trip.driver_id?.name || 'Unknown'}</span>
+                                                    </div>
+                                                    <div className="text-xs text-slate-500 mt-1 flex items-center gap-1 font-medium">
+                                                        <Users size={12} className="text-slate-500" />
+                                                        <span>Cl: {trip.cleaner_name || '-'}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-3 text-right">
+                                                    <div className="flex flex-col items-end">
+                                                        <span className={`font-bold font-mono ${trip.payment_status === 'pay_later' ? 'text-slate-500 line-through' : 'text-emerald-400'}`}>
+                                                            ₹{(trip.income || 0).toLocaleString()}
+                                                        </span>
+                                                        {trip.payment_status === 'pay_later' ? (
+                                                            <span className="text-[10px] text-amber-500 bg-amber-500/10 px-1 py-0.5 rounded font-bold mt-0.5 animate-pulse">Pay Later</span>
+                                                        ) : (
+                                                            <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-1 py-0.5 rounded font-bold mt-0.5">Received</span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-3 text-right text-red-400 font-bold font-mono">
+                                                    ₹{(trip.total_expenses || 0).toLocaleString()}
+                                                </td>
+                                                <td className={`px-3 py-3 text-right font-bold font-mono ${profit >= 0 ? 'text-blue-400' : 'text-rose-500'}`}>
+                                                    {profit >= 0 ? '+' : ''}₹{profit.toLocaleString()}
+                                                </td>
+                                                <td className="px-3 py-3 text-center">
+                                                    <div className="flex items-center justify-center gap-1.5">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleEdit(trip); }}
+                                                            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-all"
+                                                            title="Edit Log"
+                                                        >
+                                                            <Edit2 size={15} />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleDelete(trip._id); }}
+                                                            className="p-1.5 text-red-400/80 hover:text-red-400 hover:bg-red-500/10 rounded transition-all"
+                                                            title="Delete Log"
+                                                        >
+                                                            <Trash2 size={15} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {expandedRows[trip._id] && (
+                                                <tr className="bg-slate-950/50">
+                                                    <td colSpan="7" className="px-6 py-4 border-l-2 border-blue-500">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-200 text-slate-400 text-xs">
+                                                            <div>
+                                                                <span className="text-[10px] uppercase text-slate-500 font-bold block mb-1">Payment Details</span>
+                                                                <div className="space-y-1.5">
+                                                                    <p className="text-white font-medium">Expected Income: ₹{trip.income?.toLocaleString() || 0}</p>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span>Payment Status:</span>
+                                                                        {trip.payment_status === 'received' ? (
+                                                                            <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                                                                                Received
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span className="text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                                                                                Pay Later (Pending)
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    {trip.payment_status === 'received' && trip.payment_date && (
+                                                                        <p>
+                                                                            Paid Date: <span className="text-slate-300 font-mono">{formatDate(trip.payment_date)}</span>
+                                                                        </p>
+                                                                    )}
+                                                                    {trip.payment_status === 'pay_later' && (
+                                                                        <div className="pt-2 border-t border-slate-800/60 mt-1" onClick={(e) => e.stopPropagation()}>
+                                                                            <span className="text-[10px] text-slate-500 font-semibold block mb-1.5">Record Payment</span>
+                                                                            <div className="flex items-center gap-2 max-w-xs">
+                                                                                <input
+                                                                                    type="date"
+                                                                                    value={quickPaymentDates[trip._id] || new Date().toISOString().split('T')[0]}
+                                                                                    onChange={(e) => setQuickPaymentDates(prev => ({ ...prev, [trip._id]: e.target.value }))}
+                                                                                    className="bg-slate-900 border border-slate-700 text-white rounded-lg px-2 py-1 text-xs focus:outline-none flex-1 max-w-[130px] h-8"
+                                                                                />
+                                                                                <button
+                                                                                    onClick={(e) => handleRecordPayment(e, trip._id, quickPaymentDates[trip._id] || new Date().toISOString().split('T')[0])}
+                                                                                    disabled={recordingPayment[trip._id]}
+                                                                                    className="px-3 py-1 h-8 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/20"
+                                                                                >
+                                                                                    {recordingPayment[trip._id] ? 'Saving...' : 'Mark Paid'}
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <span className="text-[10px] uppercase text-slate-500 font-bold block mb-1">Expenses Details</span>
+                                                                <div className="grid grid-cols-2 gap-1 text-[11px]">
+                                                                    {trip.fuel > 0 && <span>Fuel: <span className="text-white">₹{trip.fuel.toLocaleString()}</span></span>}
+                                                                    {trip.fasttag > 0 && <span>FastTag: <span className="text-white">₹{trip.fasttag.toLocaleString()}</span></span>}
+                                                                    {trip.driver_allowance > 0 && <span>Driver Allowance: <span className="text-white">₹{trip.driver_allowance.toLocaleString()}</span></span>}
+                                                                    {trip.cleaner_payment > 0 && <span>Cleaner Bata: <span className="text-white">₹{trip.cleaner_payment.toLocaleString()}</span></span>}
+                                                                    {trip.service > 0 && <span>Service: <span className="text-white">₹{trip.service.toLocaleString()}</span></span>}
+                                                                    {trip.adblue > 0 && <span>AdBlue: <span className="text-white">₹{trip.adblue.toLocaleString()}</span></span>}
+                                                                    {trip.grease > 0 && <span>Grease: <span className="text-white">₹{trip.grease.toLocaleString()}</span></span>}
+                                                                    {trip.air > 0 && <span>Air: <span className="text-white">₹{trip.air.toLocaleString()}</span></span>}
+                                                                    {trip.other_expense > 0 && <span>Other Exp: <span className="text-white">₹{trip.other_expense.toLocaleString()}</span></span>}
+                                                                </div>
+                                                                {trip.notes && (
+                                                                    <div className="mt-2 pt-2 border-t border-slate-800">
+                                                                        <span className="text-[10px] uppercase text-slate-500 font-bold block mb-1">Notes</span>
+                                                                        <p className="text-xs text-slate-300 italic">&quot;{trip.notes}&quot;</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })}
+
+                                {trips.length === 0 && (
+                                    <tr>
+                                        <td colSpan="7" className="text-center py-12 text-slate-500">
+                                            No tour trips logged yet. Click "Log Tour Trip" to create one.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Mobile Card List View */}
+                    <div className="md:hidden divide-y divide-slate-800">
+                        {trips.map(trip => {
+                            const profit = (trip.income || 0) - (trip.total_expenses || 0);
+                            const isExpanded = !!expandedRows[trip._id];
+                            return (
+                                <div key={trip._id} className="p-4 bg-slate-900/50 hover:bg-slate-800/20 transition-all">
+                                    {/* Card Header (clickable to expand) */}
+                                    <div 
+                                        className="flex justify-between items-start cursor-pointer group"
+                                        onClick={() => toggleRow(trip._id)}
+                                    >
+                                        <div className="space-y-1">
+                                            <div className="font-semibold text-white flex items-center gap-1.5 text-sm">
                                                 <Calendar size={13} className="text-slate-500" />
                                                 {formatDate(trip.trip_date)}
                                             </div>
-                                            <div className="text-xs text-slate-400 flex items-center gap-1 mt-1 font-mono uppercase">
+                                            <div className="text-xs text-slate-400 font-mono uppercase flex items-center gap-1">
                                                 <Truck size={12} className="text-slate-500" />
-                                                {trip.vehicle_id?.vehicle_no || 'Unknown'} {trip.vehicle_id?.vehicle_name ? `(${trip.vehicle_id.vehicle_name})` : ''}
+                                                {trip.vehicle_id?.vehicle_no || 'Unknown'}
                                             </div>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="font-medium text-white flex items-center gap-1.5">
-                                                <MapPin size={13} className="text-slate-500" />
-                                                {trip.trip_route}
-                                            </div>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-1 font-semibold text-white">
-                                                <User size={13} className="text-slate-500" />
-                                                <span>{trip.actual_driver_name || trip.driver_id?.name || 'Unknown'}</span>
-                                            </div>
-                                        </td>
-                                        <td className="p-4 text-right text-emerald-400 font-bold font-mono">
-                                            ₹{(trip.income || 0).toLocaleString()}
-                                        </td>
-                                        <td className="p-4 text-right text-red-400 font-bold font-mono">
-                                            ₹{(trip.total_expenses || 0).toLocaleString()}
-                                        </td>
-                                        <td className={`p-4 text-right font-bold font-mono ${profit >= 0 ? 'text-blue-400' : 'text-rose-500'}`}>
-                                            {profit >= 0 ? '+' : ''}₹{profit.toLocaleString()}
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            <div className="flex items-center justify-center gap-1.5">
-                                                <button
-                                                    onClick={() => handleEdit(trip)}
-                                                    className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-all"
-                                                    title="Edit Log"
-                                                >
-                                                    <Edit2 size={15} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(trip._id)}
-                                                    className="p-1.5 text-red-400/80 hover:text-red-400 hover:bg-red-500/10 rounded transition-all"
-                                                    title="Delete Log"
-                                                >
-                                                    <Trash2 size={15} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {trip.payment_status === 'pay_later' ? (
+                                                <span className="text-[10px] text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded font-bold">Pay Later</span>
+                                            ) : (
+                                                <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded font-bold">Received</span>
+                                            )}
+                                            <span className="text-slate-500 group-hover:text-white transition-colors text-xs">
+                                                {isExpanded ? '▲' : '▼'}
+                                            </span>
+                                        </div>
+                                    </div>
 
-                            {trips.length === 0 && (
-                                <tr>
-                                    <td colSpan="7" className="text-center py-12 text-slate-500">
-                                        No tour trips logged yet. Click "Log Tour Trip" to create one.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                    {/* Trip Route */}
+                                    <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-300">
+                                        <MapPin size={13} className="text-slate-500" />
+                                        <span className="font-medium text-white">{trip.trip_route}</span>
+                                    </div>
+
+                                    {/* Crew */}
+                                    <div className="mt-2 grid grid-cols-2 gap-2 text-xs border-t border-slate-800/40 pt-2">
+                                        <div className="flex items-center gap-1 text-slate-300">
+                                            <User size={13} className="text-slate-500" />
+                                            <span>Dr: {trip.actual_driver_name || trip.driver_id?.name || 'Unknown'}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-slate-300">
+                                            <Users size={12} className="text-slate-500" />
+                                            <span>Cl: {trip.cleaner_name || '-'}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Metrics Grid */}
+                                    <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] bg-slate-950 p-2.5 rounded-lg border border-slate-800/60">
+                                        <div className="space-y-0.5 text-center">
+                                            <span className="text-slate-500 block">Income</span>
+                                            <span className={`font-bold font-mono ${trip.payment_status === 'pay_later' ? 'text-slate-500 line-through' : 'text-emerald-400'}`}>
+                                                ₹{(trip.income || 0).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="space-y-0.5 text-center">
+                                            <span className="text-slate-500 block">Expenses</span>
+                                            <span className="font-bold font-mono text-red-400">
+                                                ₹{(trip.total_expenses || 0).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="space-y-0.5 text-center">
+                                            <span className="text-slate-500 block">Net Profit</span>
+                                            <span className={`font-bold font-mono ${profit >= 0 ? 'text-blue-400' : 'text-rose-500'}`}>
+                                                {profit >= 0 ? '+' : ''}₹{profit.toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Actions & Expanded Area */}
+                                    <div className="mt-3 pt-2 border-t border-slate-800/60 flex justify-between items-center">
+                                        <span className="text-[10px] text-slate-500">Click header to expand details</span>
+                                        <div className="flex gap-1.5">
+                                            <button
+                                                onClick={() => handleEdit(trip)}
+                                                className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-all"
+                                                title="Edit Log"
+                                            >
+                                                <Edit2 size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(trip._id)}
+                                                className="p-1.5 text-red-400/80 hover:text-red-400 hover:bg-red-500/10 rounded transition-all"
+                                                title="Delete Log"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Expanded Details */}
+                                    {isExpanded && (
+                                        <div className="mt-3 p-3 bg-slate-950/80 border border-slate-800 rounded-lg space-y-3 text-xs text-slate-400 animate-in fade-in duration-200">
+                                            <div>
+                                                <span className="text-[10px] uppercase text-slate-500 font-bold block mb-1">Payment Details</span>
+                                                <div className="space-y-1.5">
+                                                    <p className="text-white font-medium">Expected Income: ₹{trip.income?.toLocaleString() || 0}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <span>Payment Status:</span>
+                                                        {trip.payment_status === 'received' ? (
+                                                            <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                                                                Received
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                                                                Pay Later (Pending)
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {trip.payment_status === 'received' && trip.payment_date && (
+                                                        <p>Paid Date: <span className="text-slate-300 font-mono">{formatDate(trip.payment_date)}</span></p>
+                                                    )}
+                                                    {trip.payment_status === 'pay_later' && (
+                                                        <div className="pt-2 border-t border-slate-800 mt-1">
+                                                            <span className="text-[10px] text-slate-500 font-semibold block mb-1.5">Record Payment</span>
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="date"
+                                                                    value={quickPaymentDates[trip._id] || new Date().toISOString().split('T')[0]}
+                                                                    onChange={(e) => setQuickPaymentDates(prev => ({ ...prev, [trip._id]: e.target.value }))}
+                                                                    className="bg-slate-900 border border-slate-700 text-white rounded-lg px-2 py-1 text-xs focus:outline-none flex-1 max-w-[130px] h-8"
+                                                                />
+                                                                <button
+                                                                    onClick={(e) => handleRecordPayment(e, trip._id, quickPaymentDates[trip._id] || new Date().toISOString().split('T')[0])}
+                                                                    disabled={recordingPayment[trip._id]}
+                                                                    className="px-3 py-1 h-8 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded-lg text-xs transition-colors"
+                                                                >
+                                                                    {recordingPayment[trip._id] ? 'Saving...' : 'Mark Paid'}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] uppercase text-slate-500 font-bold block mb-1">Expenses Details</span>
+                                                <div className="grid grid-cols-2 gap-1 text-[11px]">
+                                                    {trip.fuel > 0 && <span>Fuel: <span className="text-white">₹{trip.fuel.toLocaleString()}</span></span>}
+                                                    {trip.fasttag > 0 && <span>FastTag: <span className="text-white">₹{trip.fasttag.toLocaleString()}</span></span>}
+                                                    {trip.driver_allowance > 0 && <span>Driver Allowance: <span className="text-white">₹{trip.driver_allowance.toLocaleString()}</span></span>}
+                                                    {trip.cleaner_payment > 0 && <span>Cleaner Bata: <span className="text-white">₹{trip.cleaner_payment.toLocaleString()}</span></span>}
+                                                    {trip.service > 0 && <span>Service: <span className="text-white">₹{trip.service.toLocaleString()}</span></span>}
+                                                    {trip.adblue > 0 && <span>AdBlue: <span className="text-white">₹{trip.adblue.toLocaleString()}</span></span>}
+                                                    {trip.grease > 0 && <span>Grease: <span className="text-white">₹{trip.grease.toLocaleString()}</span></span>}
+                                                    {trip.air > 0 && <span>Air: <span className="text-white">₹{trip.air.toLocaleString()}</span></span>}
+                                                    {trip.other_expense > 0 && <span>Other Exp: <span className="text-white">₹{trip.other_expense.toLocaleString()}</span></span>}
+                                                </div>
+                                                {trip.notes && (
+                                                    <div className="mt-2 pt-2 border-t border-slate-800">
+                                                        <span className="text-[10px] uppercase text-slate-500 font-bold block mb-1">Notes</span>
+                                                        <p className="text-xs text-slate-300 italic">&quot;{trip.notes}&quot;</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
         </div>

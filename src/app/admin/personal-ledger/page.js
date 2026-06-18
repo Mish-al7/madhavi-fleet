@@ -444,9 +444,10 @@ export default function PersonalLedgerPage() {
                 </button>
             </div>
 
-            {/* Ledger Table */}
+            {/* Ledger Table / List */}
             <div className="bg-slate-900 rounded-2xl shadow-xl overflow-hidden border border-slate-800">
-                <div className="overflow-x-auto">
+                {/* Desktop View */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-slate-800 border-b border-slate-700">
                             <tr>
@@ -546,6 +547,78 @@ export default function PersonalLedgerPage() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden divide-y divide-slate-800/60">
+                    {loading ? (
+                        <div className="p-6 text-center text-slate-400">Loading...</div>
+                    ) : entries.length === 0 ? (
+                        <div className="p-6 text-center text-slate-400">
+                            No entries found. Add your first entry to get started.
+                        </div>
+                    ) : (
+                        [...entries]
+                            .sort((a, b) => {
+                                const dateA = new Date(a.date);
+                                const dateB = new Date(b.date);
+
+                                // Sort by date (newest first)
+                                if (dateB.getTime() !== dateA.getTime()) {
+                                    return dateB.getTime() - dateA.getTime();
+                                }
+
+                                // Sort by createdAt (newest first)
+                                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                            })
+                            .map((entry) => (
+                                <div key={entry._id} className="p-4 space-y-3 hover:bg-slate-800/10 transition-colors">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <span className="text-xs text-slate-400 font-mono">{formatDate(entry.date)}</span>
+                                            <span className="block text-sm font-semibold text-white mt-1">{entry.description}</span>
+                                        </div>
+                                        <div className="text-right">
+                                            {entry.type === 'income' ? (
+                                                <span className="text-sm font-bold text-green-400 font-mono">
+                                                    +₹{entry.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </span>
+                                            ) : (
+                                                <span className="text-sm font-bold text-red-400 font-mono">
+                                                    -₹{entry.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </span>
+                                            )}
+                                            <span className="block text-[10px] text-slate-500 font-mono mt-0.5">
+                                                Bal: ₹{entry.running_balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-between items-center pt-2 border-t border-slate-800/50">
+                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${entry.type === 'income' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                                            {entry.type}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleEdit(entry)}
+                                                className="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                                                title="Edit entry"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(entry._id)}
+                                                disabled={deletingId === entry._id}
+                                                className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                title="Delete entry"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                    )}
                 </div>
             </div>
 

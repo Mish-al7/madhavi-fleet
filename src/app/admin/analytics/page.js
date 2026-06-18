@@ -26,9 +26,9 @@ const fmtMonth = str => {
 const fmt = n => `₹${(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 
 const tooltipStyle = {
-    contentStyle: { backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', fontSize: '12px' },
-    labelStyle: { color: '#e2e8f0', fontWeight: 600 },
-    itemStyle: { color: '#94a3b8' },
+    contentStyle: { backgroundColor: 'var(--color-slate-900)', border: '1px solid var(--color-slate-800)', borderRadius: '8px', fontSize: '12px' },
+    labelStyle: { color: 'var(--color-slate-100)', fontWeight: 600 },
+    itemStyle: { color: 'var(--color-slate-400)' },
 };
 
 // ─── Chart wrappers ───────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ function ChartCard({ title, children, empty }) {
                 <div className="flex items-center justify-center h-[260px] text-slate-600 text-sm">No data</div>
             ) : (
                 <div className="overflow-x-auto w-full pb-2">
-                    <div className="h-[260px] min-w-[500px] w-full">{children}</div>
+                    <div className="h-[260px] min-w-0 md:min-w-[500px] w-full">{children}</div>
                 </div>
             )}
         </div>
@@ -157,15 +157,15 @@ export default function AnalyticsPage() {
                 <ChartCard title="Income vs Expense (Monthly)" empty={!incomeExpense.length}>
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={incomeExpense} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                            <XAxis dataKey="month" stroke="#475569" tick={{ fontSize: 10 }} tickFormatter={fmtMonth} />
-                            <YAxis stroke="#475569" tick={{ fontSize: 10 }} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-slate-800)" />
+                            <XAxis dataKey="month" stroke="var(--color-slate-400)" tick={{ fontSize: 10 }} tickFormatter={fmtMonth} />
+                            <YAxis stroke="var(--color-slate-400)" tick={{ fontSize: 10 }} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
                             <Tooltip
                                 {...tooltipStyle}
                                 labelFormatter={fmtMonth}
                                 formatter={(v, n) => [fmt(v), n === 'income' ? 'Income' : 'Expenses']}
                             />
-                            <Legend wrapperStyle={{ fontSize: '11px', color: '#94a3b8' }} />
+                            <Legend wrapperStyle={{ fontSize: '11px', color: 'var(--color-slate-400)' }} />
                             <Bar dataKey="income" name="income" fill="#10b981" radius={[3, 3, 0, 0]} maxBarSize={32} />
                             <Bar dataKey="expense" name="expense" fill="#ef4444" radius={[3, 3, 0, 0]} maxBarSize={32} />
                         </BarChart>
@@ -176,9 +176,9 @@ export default function AnalyticsPage() {
                 <ChartCard title="Profit Trend (Monthly)" empty={!profitTrend.length}>
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={profitTrend} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                            <XAxis dataKey="month" stroke="#475569" tick={{ fontSize: 10 }} tickFormatter={fmtMonth} />
-                            <YAxis stroke="#475569" tick={{ fontSize: 10 }} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-slate-800)" />
+                            <XAxis dataKey="month" stroke="var(--color-slate-400)" tick={{ fontSize: 10 }} tickFormatter={fmtMonth} />
+                            <YAxis stroke="var(--color-slate-400)" tick={{ fontSize: 10 }} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
                             <Tooltip
                                 {...tooltipStyle}
                                 labelFormatter={fmtMonth}
@@ -189,7 +189,7 @@ export default function AnalyticsPage() {
                                 dataKey="profit"
                                 stroke="#3b82f6"
                                 strokeWidth={2.5}
-                                dot={{ fill: '#3b82f6', r: 3, strokeWidth: 2, stroke: '#0f172a' }}
+                                dot={{ fill: '#3b82f6', r: 3, strokeWidth: 2, stroke: 'var(--color-slate-900)' }}
                                 activeDot={{ r: 5 }}
                             />
                         </LineChart>
@@ -215,12 +215,12 @@ export default function AnalyticsPage() {
                                 ))}
                             </Pie>
                             <PieTooltip
-                                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', fontSize: '12px' }}
-                                itemStyle={{ color: '#fff' }}
+                                contentStyle={{ backgroundColor: 'var(--color-slate-900)', border: '1px solid var(--color-slate-800)', borderRadius: '8px', fontSize: '12px' }}
+                                itemStyle={{ color: 'var(--color-slate-100)' }}
                                 formatter={v => [fmt(v), 'Amount']}
                             />
                             <PieLegend
-                                wrapperStyle={{ fontSize: '10px', color: '#94a3b8' }}
+                                wrapperStyle={{ fontSize: '10px', color: 'var(--color-slate-400)' }}
                                 formatter={name => name.length > 18 ? name.slice(0, 17) + '…' : name}
                             />
                         </PieChart>
@@ -235,12 +235,12 @@ export default function AnalyticsPage() {
                             data={vehicleContrib}
                             margin={{ top: 4, right: 16, left: 0, bottom: 4 }}
                         >
-                            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
-                            <XAxis type="number" stroke="#475569" tick={{ fontSize: 10 }} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-slate-800)" horizontal={false} />
+                            <XAxis type="number" stroke="var(--color-slate-400)" tick={{ fontSize: 10 }} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
                             <YAxis
                                 type="category"
                                 dataKey="vehicle"
-                                stroke="#475569"
+                                stroke="var(--color-slate-400)"
                                 tick={{ fontSize: 10 }}
                                 width={80}
                                 interval={0}
@@ -249,7 +249,7 @@ export default function AnalyticsPage() {
                                 {...tooltipStyle}
                                 formatter={(v, n) => [fmt(v), n === 'profit' ? 'Profit' : n === 'income' ? 'Income' : 'Expenses']}
                             />
-                            <Legend wrapperStyle={{ fontSize: '11px', color: '#94a3b8' }} />
+                            <Legend wrapperStyle={{ fontSize: '11px', color: 'var(--color-slate-400)' }} />
                             <Bar dataKey="income" name="income" fill="#10b981" radius={[0, 3, 3, 0]} maxBarSize={18} />
                             <Bar dataKey="expense" name="expense" fill="#f97316" radius={[0, 3, 3, 0]} maxBarSize={18} />
                             <Bar dataKey="profit" name="profit" fill="#3b82f6" radius={[0, 3, 3, 0]} maxBarSize={18} />

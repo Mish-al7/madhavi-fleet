@@ -44,7 +44,6 @@ export async function GET(req) {
                     adblue: { $sum: '$adblue' },
                     grease: { $sum: '$grease' },
                     air: { $sum: '$air' },
-                    deposit_to_kdr_bank: { $sum: '$deposit_to_kdr_bank' },
                     other_expense: { $sum: '$other_expense' },
                 },
             },
@@ -59,7 +58,6 @@ export async function GET(req) {
                 { name: 'AdBlue', value: tripTotals.adblue || 0 },
                 { name: 'Grease', value: tripTotals.grease || 0 },
                 { name: 'Air', value: tripTotals.air || 0 },
-                { name: 'KDR Bank Deposit', value: tripTotals.deposit_to_kdr_bank || 0 },
                 { name: 'Other (Trip)', value: tripTotals.other_expense || 0 },
             ].filter(s => s.value > 0)
             : [];

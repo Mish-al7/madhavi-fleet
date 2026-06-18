@@ -99,7 +99,6 @@ fuel: Number,
 fasttag: Number,
 driver_allowance: Number,
 service: Number,
-deposit_to_kdr_bank: Number,
 other_expense: Number,
 
 total_expenses: Number (auto-calculated),
@@ -138,7 +137,6 @@ fuel +
 fasttag +
 driver_allowance +
 service +
-deposit_to_kdr_bank +
 other_expense
 
 yaml

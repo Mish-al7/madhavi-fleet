@@ -127,6 +127,16 @@ const BookingSchema = new mongoose.Schema({
         type: String,
         trim: true,
     },
+    payment_status: {
+        type: String,
+        enum: ['received', 'pay_later'],
+        default: 'pay_later',
+    },
+    payment_date: {
+        type: Date,
+        required: false,
+    },
+
 
     // Vehicle (locked reference)
     vehicle_id: {
@@ -237,6 +247,14 @@ BookingSchema.statics.checkVehicleAvailability = async function (vehicleId, star
         }))
     };
 };
+
+// Pre-save hook to populate payment_date if payment_status is received
+BookingSchema.pre('save', function (next) {
+    if (this.payment_status === 'received' && !this.payment_date) {
+        this.payment_date = this.booking_date || new Date();
+    }
+    next();
+});
 
 // Force model re-registration in development to pick up schema changes
 if (process.env.NODE_ENV === 'development') {

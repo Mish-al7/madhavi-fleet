@@ -69,7 +69,16 @@ export async function GET(req, { params }) {
                     trip_route: 1,
                     driver_id: 1,
                     actual_driver_name: 1,
-                    income: { $ifNull: ["$income", 0] },
+                    income: {
+                        $cond: {
+                            if: { $eq: ["$payment_status", "pay_later"] },
+                            then: 0,
+                            else: { $ifNull: ["$income", 0] }
+                        }
+                    },
+                    trip_income: { $ifNull: ["$income", 0] },
+                    payment_status: { $ifNull: ["$payment_status", "received"] },
+                    payment_date: { $ifNull: ["$payment_date", null] },
                     fuel: { $ifNull: ["$fuel", 0] },
                     fasttag: { $ifNull: ["$fasttag", 0] },
                     driver_allowance: { $ifNull: ["$driver_allowance", 0] },
@@ -77,7 +86,6 @@ export async function GET(req, { params }) {
                     adblue: { $ifNull: ["$adblue", 0] },
                     grease: { $ifNull: ["$grease", 0] },
                     air: { $ifNull: ["$air", 0] },
-                    deposit_to_kdr_bank: { $ifNull: ["$deposit_to_kdr_bank", 0] },
                     other_expense: { $ifNull: ["$other_expense", 0] },
                     bookingId: 1,
                     notes: 1,
@@ -141,6 +149,7 @@ export async function GET(req, { params }) {
                                 driver_id: { $literal: null },
                                 actual_driver_name: { $literal: "Admin" },
                                 income: { $literal: 0 },
+                                trip_income: { $literal: 0 },
                                 fuel: { $literal: 0 },
                                 fasttag: { $literal: 0 },
                                 driver_allowance: { $literal: 0 },
@@ -148,7 +157,6 @@ export async function GET(req, { params }) {
                                 adblue: { $literal: 0 },
                                 grease: { $literal: 0 },
                                 air: { $literal: 0 },
-                                deposit_to_kdr_bank: { $literal: 0 },
                                 other_expense: { $literal: 0 },
                                 notes: "$description",
                                 createdAt: 1,

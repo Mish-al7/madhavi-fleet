@@ -77,6 +77,8 @@ export default function NewBookingPage() {
         total_amount: '',
         other_expenses: '',
         driver_food_accommodation: '',
+        payment_status: 'pay_later',
+        payment_date: new Date().toISOString().split('T')[0],
         // Vehicle
         vehicle_id: '',
     });
@@ -183,6 +185,8 @@ export default function NewBookingPage() {
                     total_kilometers: Number(formData.total_kilometers) || 0,
                     advance_amount: Number(formData.advance_amount) || 0,
                     total_amount: Number(formData.total_amount) || 0,
+                    payment_status: formData.payment_status || 'pay_later',
+                    payment_date: formData.payment_status === 'pay_later' ? null : (formData.payment_date || new Date()),
                 }),
             });
 
@@ -215,6 +219,8 @@ export default function NewBookingPage() {
                 total_amount: '',
                 other_expenses: '',
                 driver_food_accommodation: '',
+                payment_status: 'pay_later',
+                payment_date: new Date().toISOString().split('T')[0],
                 vehicle_id: vehicles.length === 1 ? vehicles[0]._id : '',
             });
 
@@ -282,7 +288,7 @@ export default function NewBookingPage() {
                                     <option>Loading...</option>
                                 ) : (
                                     vehicles.map(v => (
-                                        <option key={v._id} value={v._id}>{v.vehicle_no}{v.nickname ? ` - ${v.nickname}` : ''}</option>
+                                        <option key={v._id} value={v._id}>{v.vehicle_no} {v.vehicle_name ? `(${v.vehicle_name})` : ''}{v.nickname ? ` - ${v.nickname}` : ''}</option>
                                     ))
                                 )}
                             </select>
@@ -371,6 +377,35 @@ export default function NewBookingPage() {
                         <div className="grid grid-cols-2 gap-4">
                             <InputGroup label="Total Amount" name="total_amount" value={formData.total_amount} onChange={handleChange} type="number" placeholder="0" />
                             <InputGroup label="Advance Amount" name="advance_amount" value={formData.advance_amount} onChange={handleChange} type="number" placeholder="0" />
+                        </div>
+
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center gap-3 py-2">
+                                <input
+                                    type="checkbox"
+                                    id="payment_status_checkbox"
+                                    name="payment_status"
+                                    checked={formData.payment_status === 'received'}
+                                    onChange={(e) => setFormData(prev => ({
+                                        ...prev,
+                                        payment_status: e.target.checked ? 'received' : 'pay_later'
+                                    }))}
+                                    className="w-5 h-5 rounded border-slate-700 bg-slate-800/50 text-blue-500 focus:ring-blue-500/50 focus:ring-2 cursor-pointer"
+                                />
+                                <label htmlFor="payment_status_checkbox" className="text-sm font-semibold text-slate-300 select-none cursor-pointer">
+                                    Payment Received
+                                </label>
+                            </div>
+                            {formData.payment_status === 'received' && (
+                                <InputGroup
+                                    label="Payment Date"
+                                    name="payment_date"
+                                    value={formData.payment_date}
+                                    onChange={handleChange}
+                                    type="date"
+                                    icon={Calendar}
+                                />
+                            )}
                         </div>
 
                         <InputGroup label="Other Expenses" name="other_expenses" value={formData.other_expenses} onChange={handleChange} placeholder="e.g., Tolls, Parking" />

@@ -311,15 +311,17 @@ export default function RoutesPage() {
             {/* Tab: Route Analytics */}
             {activeTab === 'analytics' && (
                 <div className="space-y-6">
-                    {/* Performance Table */}
+                    {/* Performance Table / List */}
                     <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg">
                         <div className="p-5 border-b border-slate-800">
                             <h3 className="text-lg font-bold text-white">Route Revenue & Trip Performance</h3>
                         </div>
-                        <div className="overflow-x-auto">
+
+                        {/* Desktop View */}
+                        <div className="hidden md:block overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-slate-900/50 text-slate-400 text-xs uppercase tracking-wider">
+                                    <tr className="bg-slate-900/50 text-slate-400 text-xs uppercase tracking-wider whitespace-nowrap">
                                         <th className="p-4 border-b border-slate-800 font-semibold">Route Path</th>
                                         <th className="p-4 border-b border-slate-800 text-center font-semibold">Total Trips</th>
                                         <th className="p-4 border-b border-slate-800 text-right font-semibold">Income</th>
@@ -328,7 +330,7 @@ export default function RoutesPage() {
                                         <th className="p-4 border-b border-slate-800 text-center font-semibold">Avg. Seats Filled</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-800 text-sm text-slate-300">
+                                <tbody className="divide-y divide-slate-800 text-sm text-slate-300 whitespace-nowrap">
                                     {routes.map(route => (
                                         <tr key={route._id} className="hover:bg-slate-800/30 transition-colors">
                                             <td className="p-4 font-medium text-white">
@@ -365,6 +367,60 @@ export default function RoutesPage() {
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+
+                        {/* Mobile View */}
+                        <div className="md:hidden divide-y divide-slate-800/60">
+                            {routes.length === 0 ? (
+                                <div className="text-center py-12 text-slate-500 p-4">
+                                    No route performance data available.
+                                </div>
+                            ) : (
+                                routes.map(route => (
+                                    <div key={route._id} className="p-4 space-y-3 hover:bg-slate-800/10 transition-colors">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <span className="font-bold text-white text-sm">{route.name}</span>
+                                                <span className="block text-xs text-slate-400 mt-1">
+                                                    {route.from} &rarr; {route.to}
+                                                </span>
+                                            </div>
+                                            <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-bold px-2 py-0.5 rounded">
+                                                {route.distance_km} KM
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2 text-xs border-t border-slate-800/40 pt-2">
+                                            <div>
+                                                <span className="text-slate-500 font-medium">Total Trips: </span>
+                                                <span className="text-slate-200 font-semibold">{route.tripCount}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-slate-500 font-medium">Avg Seats: </span>
+                                                <span className="text-slate-200 font-semibold">{route.averageSeatsFilled || 0}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Financial Breakdown Grid */}
+                                        <div className="grid grid-cols-3 gap-2 text-[10px] pt-1">
+                                            <div className="bg-slate-950 p-2 rounded border border-slate-800/60 text-center">
+                                                <span className="text-slate-500 block text-[9px] uppercase tracking-wider">Income</span>
+                                                <span className="font-semibold font-mono text-emerald-400">₹{(route.totalIncome || 0).toLocaleString()}</span>
+                                            </div>
+                                            <div className="bg-slate-950 p-2 rounded border border-slate-800/60 text-center">
+                                                <span className="text-slate-500 block text-[9px] uppercase tracking-wider">Expenses</span>
+                                                <span className="font-semibold font-mono text-red-400">₹{(route.totalExpenses || 0).toLocaleString()}</span>
+                                            </div>
+                                            <div className="bg-slate-950 p-2 rounded border border-slate-800/60 text-center">
+                                                <span className="text-slate-500 block text-[9px] uppercase tracking-wider">Net Profit</span>
+                                                <span className={`font-semibold font-mono ${route.totalProfit >= 0 ? 'text-blue-400' : 'text-rose-500'}`}>
+                                                    ₹{(route.totalProfit || 0).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>

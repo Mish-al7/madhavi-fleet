@@ -22,6 +22,7 @@ export async function GET(req) {
         const to = searchParams.get('to');
         const vehicle_id = searchParams.get('vehicle_id');
         const driver_id = searchParams.get('driver_id');
+        const trip_type = searchParams.get('trip_type');
 
         // Build trip match — $type:'date' guards against null/string trip_date fields
         const tripMatch = { company_id, trip_date: { $type: 'date' } };
@@ -36,9 +37,11 @@ export async function GET(req) {
         }
         if (vehicle_id) tripMatch.vehicle_id = new mongoose.Types.ObjectId(vehicle_id);
         if (driver_id) tripMatch.driver_id = new mongoose.Types.ObjectId(driver_id);
+        if (trip_type) tripMatch.trip_type = trip_type;
 
         // Build admin expense match — same null guard on start_date
-        const expenseMatch = { company_id, start_date: { $type: 'date' } };
+        // Exclude admin expenses if filtering specifically by trip type
+        const expenseMatch = trip_type ? { _id: null } : { company_id, start_date: { $type: 'date' } };
         if (from || to) {
             expenseMatch.start_date = { $type: 'date' };
             if (from) expenseMatch.start_date.$gte = new Date(from);

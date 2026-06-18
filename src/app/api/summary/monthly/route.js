@@ -18,6 +18,7 @@ export async function GET(req) {
         const { searchParams } = new URL(req.url);
         const year = parseInt(searchParams.get('year')) || new Date().getFullYear();
         const selectedMonth = searchParams.get('month'); // e.g. "2026-01"
+        const tripType = searchParams.get('trip_type') || 'all';
 
         // Build match filter
         const matchFilter = {
@@ -28,6 +29,10 @@ export async function GET(req) {
             matchFilter.month = selectedMonth;
         } else {
             matchFilter.month = { $regex: `^${year}-` };
+        }
+
+        if (tripType !== 'all') {
+            matchFilter.trip_type = tripType;
         }
 
         const summary = await Trip.aggregate([
@@ -70,10 +75,14 @@ export async function GET(req) {
         ]);
 
         // Get available months for filter pills
-        const availableMonths = await Trip.distinct('month', {
+        const distinctFilter = {
             company_id: new mongoose.Types.ObjectId(company_id),
             month: { $regex: `^${year}-` },
-        });
+        };
+        if (tripType !== 'all') {
+            distinctFilter.trip_type = tripType;
+        }
+        const availableMonths = await Trip.distinct('month', distinctFilter);
 
         // Sort months descending (most recent first)
         availableMonths.sort((a, b) => b.localeCompare(a));

@@ -170,7 +170,8 @@ export default function ServiceLogsTab({ vehicleId }) {
 
             {/* List */}
             <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-                <div className="overflow-x-auto">
+                {/* Desktop View */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left text-sm text-slate-400">
                         <thead className="bg-slate-950 text-slate-200 uppercase tracking-wider font-semibold border-b border-slate-800">
                             <tr>
@@ -236,6 +237,98 @@ export default function ServiceLogsTab({ vehicleId }) {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile View */}
+                <div className="md:hidden divide-y divide-slate-800/60">
+                    {loading ? (
+                        <div className="p-6 text-center text-slate-500">Loading...</div>
+                    ) : logs.length === 0 ? (
+                        <div className="p-6 text-center text-slate-500">No service logs found.</div>
+                    ) : (
+                        logs.map(log => (
+                            <div key={log._id} className="p-4 space-y-3 hover:bg-slate-800/10 transition-colors">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <span className="text-xs text-slate-400 font-mono">{formatDate(log.service_date)}</span>
+                                        <span className="block text-sm font-semibold text-white mt-1">{log.service_category}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-[10px] text-slate-500 block uppercase font-bold">Total Cost</span>
+                                        <span className="text-sm font-bold text-emerald-400 font-mono">₹{log.total_cost.toLocaleString()}</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1 text-xs">
+                                    <div className="flex justify-between text-slate-300">
+                                        <span>
+                                            <span className="text-slate-500">Odometer: </span>
+                                            <span className="font-mono text-white">{log.odometer_reading.toLocaleString()} km</span>
+                                        </span>
+                                        <span>
+                                            <span className="text-slate-500">Provider: </span>
+                                            <span className="text-white">{log.service_provider || '-'}</span>
+                                        </span>
+                                    </div>
+                                    {log.description && (
+                                        <p className="text-slate-400 italic mt-1">&quot;{log.description}&quot;</p>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 text-[10px] pt-1">
+                                    <div className="bg-slate-950 p-2 rounded border border-slate-800/60">
+                                        <span className="text-slate-500 block">Parts Cost</span>
+                                        <span className="font-semibold text-slate-300 font-mono">₹{(log.parts_cost || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div className="bg-slate-950 p-2 rounded border border-slate-800/60">
+                                        <span className="text-slate-500 block">Labour Cost</span>
+                                        <span className="font-semibold text-slate-300 font-mono">₹{(log.labour_cost || 0).toLocaleString()}</span>
+                                    </div>
+                                </div>
+
+                                {log.follow_up_required && (
+                                    <div className="bg-slate-950/60 p-2 rounded border border-slate-800/60 flex items-center justify-between gap-2 text-xs">
+                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${log.follow_up_completed
+                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                            : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'}`}>
+                                            {log.follow_up_completed ? 'Service Done' : `Follow-up: ${log.next_service_date ? formatDate(log.next_service_date) : 'N/A'}`}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                if (!log.follow_up_completed) handleToggleDone(log);
+                                            }}
+                                            disabled={log.follow_up_completed}
+                                            className={`text-[10px] border px-2 py-1 rounded-md font-semibold transition-colors ${log.follow_up_completed
+                                                ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-default'
+                                                : 'bg-blue-600/20 text-blue-400 border-blue-500/20 hover:bg-blue-600/40 cursor-pointer'}`}
+                                        >
+                                            {log.follow_up_completed ? 'Done' : 'Mark Done'}
+                                        </button>
+                                    </div>
+                                )}
+
+                                <div className="flex justify-end gap-3 pt-2 border-t border-slate-800/50">
+                                    <button
+                                        onClick={() => handleEditClick(log)}
+                                        className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-colors"
+                                        title="Edit Log"
+                                    >
+                                        <Pencil size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteClick(log._id)}
+                                        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                                        title="Delete Log"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
 

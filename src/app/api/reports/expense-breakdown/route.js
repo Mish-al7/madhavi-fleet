@@ -22,6 +22,7 @@ export async function GET(req) {
         const to = searchParams.get('to');
         const vehicle_id = searchParams.get('vehicle_id');
         const driver_id = searchParams.get('driver_id');
+        const trip_type = searchParams.get('trip_type');
 
         const tripMatch = { company_id };
         if (from || to) {
@@ -35,6 +36,7 @@ export async function GET(req) {
         }
         if (vehicle_id) tripMatch.vehicle_id = new mongoose.Types.ObjectId(vehicle_id);
         if (driver_id) tripMatch.driver_id = new mongoose.Types.ObjectId(driver_id);
+        if (trip_type) tripMatch.trip_type = trip_type;
 
         // Aggregate trip-level expense categories
         const tripExpenses = await Trip.aggregate([
@@ -45,11 +47,13 @@ export async function GET(req) {
                     fuel: { $sum: '$fuel' },
                     fasttag: { $sum: '$fasttag' },
                     driver_allowance: { $sum: '$driver_allowance' },
+                    cleaner_payment: { $sum: '$cleaner_payment' },
+                    driver_payment: { $sum: '$driver_payment' },
+                    toll: { $sum: '$toll' },
                     service: { $sum: '$service' },
                     adblue: { $sum: '$adblue' },
                     grease: { $sum: '$grease' },
                     air: { $sum: '$air' },
-                    deposit_to_kdr_bank: { $sum: '$deposit_to_kdr_bank' },
                     other_expense: { $sum: '$other_expense' },
                 },
             },
@@ -61,17 +65,19 @@ export async function GET(req) {
             { category: 'Fuel', type: 'trip', amount: te.fuel || 0 },
             { category: 'FASTag', type: 'trip', amount: te.fasttag || 0 },
             { category: 'Driver Allowance', type: 'trip', amount: te.driver_allowance || 0 },
+            { category: 'Cleaner Bata', type: 'trip', amount: te.cleaner_payment || 0 },
+            { category: 'Driver Payment (Nightly)', type: 'trip', amount: te.driver_payment || 0 },
+            { category: 'Toll', type: 'trip', amount: te.toll || 0 },
             { category: 'Service', type: 'trip', amount: te.service || 0 },
             { category: 'AdBlue', type: 'trip', amount: te.adblue || 0 },
             { category: 'Grease', type: 'trip', amount: te.grease || 0 },
             { category: 'Air', type: 'trip', amount: te.air || 0 },
-            { category: 'Deposit to Bank', type: 'trip', amount: te.deposit_to_kdr_bank || 0 },
             { category: 'Other (Trip)', type: 'trip', amount: te.other_expense || 0 },
         ].filter(r => r.amount > 0);
 
-        // Admin expenses by type
-        const adminExpMatch = { company_id };
-        if (from || to) {
+        // Admin expenses by type — exclude if filtering by trip_type
+        const adminExpMatch = trip_type ? { _id: null } : { company_id };
+        if (!trip_type && (from || to)) {
             adminExpMatch.start_date = {};
             if (from) adminExpMatch.start_date.$gte = new Date(from);
             if (to) {
@@ -80,7 +86,7 @@ export async function GET(req) {
                 adminExpMatch.start_date.$lte = toDate;
             }
         }
-        if (vehicle_id) adminExpMatch.vehicle_id = new mongoose.Types.ObjectId(vehicle_id);
+        if (!trip_type && vehicle_id) adminExpMatch.vehicle_id = new mongoose.Types.ObjectId(vehicle_id);
 
         const adminExpenses = await AdminExpense.aggregate([
             { $match: adminExpMatch },

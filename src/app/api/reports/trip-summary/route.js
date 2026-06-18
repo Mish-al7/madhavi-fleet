@@ -21,6 +21,7 @@ export async function GET(req) {
         const to = searchParams.get('to');
         const vehicle_id = searchParams.get('vehicle_id');
         const driver_id = searchParams.get('driver_id');
+        const trip_type = searchParams.get('trip_type');
 
         const match = { company_id };
         if (from || to) {
@@ -34,6 +35,7 @@ export async function GET(req) {
         }
         if (vehicle_id) match.vehicle_id = new mongoose.Types.ObjectId(vehicle_id);
         if (driver_id) match.driver_id = new mongoose.Types.ObjectId(driver_id);
+        if (trip_type) match.trip_type = trip_type;
 
         const data = await Trip.aggregate([
             { $match: match },
@@ -61,6 +63,7 @@ export async function GET(req) {
                     trip_date: {
                         $dateToString: { format: '%Y-%m-%d', date: '$trip_date' },
                     },
+                    trip_type: { $ifNull: ['$trip_type', 'regular'] },
                     trip_route: 1,
                     vehicle_no: { $ifNull: ['$vehicle.vehicle_no', 'N/A'] },
                     driver_name: { $ifNull: ['$actual_driver_name', '$driver.name', 'N/A'] },

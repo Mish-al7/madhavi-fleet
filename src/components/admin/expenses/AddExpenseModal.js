@@ -127,7 +127,7 @@ export default function AddExpenseModal({ onClose, onSave, vehicles, initialData
                         >
                             <option value="">-- Company Expense (No Vehicle) --</option>
                             {vehicles.map(v => (
-                                <option key={v._id} value={v._id}>{v.registration_number || v.vehicle_no}</option> // Fallback to vehicle_no if reg not avail
+                                <option key={v._id} value={v._id}>{(v.registration_number || v.vehicle_no)} {v.vehicle_name ? `(${v.vehicle_name})` : ''}{v.nickname ? ` - ${v.nickname}` : ''}</option>
                             ))}
                         </select>
                         <p className="text-xs text-slate-500 mt-1">

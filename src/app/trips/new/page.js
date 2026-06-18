@@ -50,6 +50,8 @@ function NewTripForm() {
         trip_route: qTripRoute || '',
         actual_driver_name: '',
         income: '',
+        payment_status: 'pay_later',
+        payment_date: new Date().toISOString().split('T')[0],
         fuel: '',
         fasttag: '',
         driver_allowance: '',
@@ -57,7 +59,6 @@ function NewTripForm() {
         adblue: '',
         grease: '',
         air: '',
-        deposit_to_kdr_bank: '',
         other_expense: '',
         notes: ''
     });
@@ -93,7 +94,7 @@ function NewTripForm() {
     const totalExpenses = [
         'fuel', 'fasttag', 'driver_allowance',
         'service', 'adblue', 'grease', 'air',
-        'deposit_to_kdr_bank', 'other_expense'
+        'other_expense'
     ].reduce((sum, field) => sum + (Number(formData[field]) || 0), 0);
 
     const [success, setSuccess] = useState(false);
@@ -105,7 +106,11 @@ function NewTripForm() {
         setSuccess(false);
 
         try {
-            const submissionData = { ...formData };
+            const submissionData = {
+                ...formData,
+                payment_status: formData.payment_status || 'pay_later',
+                payment_date: formData.payment_status === 'pay_later' ? null : (formData.payment_date || new Date())
+            };
             if (!submissionData.bookingId) delete submissionData.bookingId;
 
             const res = await fetch('/api/trips', {
@@ -129,6 +134,8 @@ function NewTripForm() {
                 ...prev,
                 trip_route: '',
                 income: '',
+                payment_status: 'pay_later',
+                payment_date: new Date().toISOString().split('T')[0],
                 fuel: '',
                 fasttag: '',
                 driver_allowance: '',
@@ -136,7 +143,6 @@ function NewTripForm() {
                 adblue: '',
                 grease: '',
                 air: '',
-                deposit_to_kdr_bank: '',
                 other_expense: '',
                 notes: '',
                 bookingId: ''
@@ -212,7 +218,7 @@ function NewTripForm() {
                                     <option>Loading...</option>
                                 ) : (
                                     vehicles.map(v => (
-                                        <option key={v._id} value={v._id}>{v.vehicle_no}{v.nickname ? ` - ${v.nickname}` : ''}</option>
+                                        <option key={v._id} value={v._id}>{v.vehicle_no} {v.vehicle_name ? `(${v.vehicle_name})` : ''}{v.nickname ? ` - ${v.nickname}` : ''}</option>
                                     ))
                                 )}
                             </select>
@@ -255,10 +261,7 @@ function NewTripForm() {
                             <InputGroup label="Allowance (Driver Bata)" name="driver_allowance" value={formData.driver_allowance} onChange={handleChange} type="number" placeholder="0" />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <InputGroup label="Workshop Service" name="service" value={formData.service} onChange={handleChange} type="number" placeholder="0" />
-                            <InputGroup label="Deposit to Bank" name="deposit_to_kdr_bank" value={formData.deposit_to_kdr_bank} onChange={handleChange} type="number" placeholder="0" />
-                        </div>
+                        <InputGroup label="Workshop Service" name="service" value={formData.service} onChange={handleChange} type="number" placeholder="0" />
 
                         <div className="grid grid-cols-3 gap-4">
                             <InputGroup label="AdBlue" name="adblue" value={formData.adblue} onChange={handleChange} type="number" placeholder="0" />
@@ -283,6 +286,37 @@ function NewTripForm() {
                         <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800 flex justify-between items-center">
                             <span className="text-slate-400 text-sm">Total Expenses</span>
                             <span className="text-xl font-bold text-white">₹{totalExpenses.toLocaleString()}</span>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-slate-900/30 p-3 rounded-xl border border-slate-800/50">
+                            <div className="flex items-center gap-2.5">
+                                <input
+                                    type="checkbox"
+                                    id="payment_status_checkbox"
+                                    name="payment_status"
+                                    checked={formData.payment_status === 'received'}
+                                    onChange={(e) => setFormData(prev => ({
+                                        ...prev,
+                                        payment_status: e.target.checked ? 'received' : 'pay_later'
+                                    }))}
+                                    className="w-5 h-5 rounded border-slate-700 bg-slate-800/50 text-blue-500 focus:ring-blue-500/50 focus:ring-2 cursor-pointer"
+                                />
+                                <label htmlFor="payment_status_checkbox" className="text-sm font-semibold text-slate-300 select-none cursor-pointer">
+                                    Payment Received
+                                </label>
+                            </div>
+                            {formData.payment_status === 'received' && (
+                                <div className="flex-1">
+                                    <InputGroup
+                                        label="Payment Date"
+                                        name="payment_date"
+                                        value={formData.payment_date}
+                                        onChange={handleChange}
+                                        type="date"
+                                        icon={Calendar}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
 

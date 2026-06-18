@@ -15,6 +15,35 @@ export default function MyTripsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [editingTrip, setEditingTrip] = useState(null);
+    const [quickPaymentDates, setQuickPaymentDates] = useState({});
+    const [recordingPayment, setRecordingPayment] = useState({});
+
+    const handleRecordPayment = async (tripId, customDate) => {
+        setRecordingPayment(prev => ({ ...prev, [tripId]: true }));
+        try {
+            const dateToSubmit = customDate || new Date().toISOString().split('T')[0];
+            const res = await fetch(`/api/trips/${tripId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    payment_status: 'received',
+                    payment_date: dateToSubmit
+                })
+            });
+
+            if (res.ok) {
+                await fetchMyTrips();
+            } else {
+                const json = await res.json();
+                alert(json.error || 'Failed to record payment');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('An error occurred');
+        } finally {
+            setRecordingPayment(prev => ({ ...prev, [tripId]: false }));
+        }
+    };
 
     useEffect(() => {
         if (session) {
@@ -94,8 +123,15 @@ export default function MyTripsPage() {
                                         <Truck size={16} className="text-emerald-400" />
                                         <span>{trip.vehicle_id?.vehicle_no || 'Unknown Vehicle'}</span>
                                     </div>
-                                    <div className="text-xs text-slate-400">
-                                        {formatDate(trip.trip_date)}
+                                    <div className="flex flex-col items-end gap-1">
+                                        <div className="text-xs text-slate-400">
+                                            {formatDate(trip.trip_date)}
+                                        </div>
+                                        {trip.payment_status === 'pay_later' ? (
+                                            <span className="text-[10px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider animate-pulse">Pay Later</span>
+                                        ) : (
+                                            <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Received</span>
+                                        )}
                                     </div>
                                 </div>
 
@@ -107,7 +143,9 @@ export default function MyTripsPage() {
                                 <div className="pt-3 border-t border-slate-800/50 flex justify-between items-center">
                                     <div className="text-sm">
                                         <span className="text-slate-500">Income: </span>
-                                        <span className="text-emerald-400 font-medium">₹{trip.income?.toLocaleString() || 0}</span>
+                                        <span className={`font-medium ${trip.payment_status === 'pay_later' ? 'text-slate-500 line-through' : 'text-emerald-400'}`}>
+                                            ₹{trip.income?.toLocaleString() || 0}
+                                        </span>
                                     </div>
                                     <button
                                         onClick={() => setEditingTrip(trip)}
@@ -116,6 +154,27 @@ export default function MyTripsPage() {
                                         <Edit size={14} /> Edit
                                     </button>
                                 </div>
+
+                                {trip.payment_status === 'pay_later' && (
+                                    <div className="pt-3 border-t border-slate-800/30 space-y-2">
+                                        <span className="text-[10px] text-slate-500 font-semibold block uppercase tracking-wider">Record Payment</span>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="date"
+                                                value={quickPaymentDates[trip._id] || new Date().toISOString().split('T')[0]}
+                                                onChange={(e) => setQuickPaymentDates(prev => ({ ...prev, [trip._id]: e.target.value }))}
+                                                className="bg-slate-950 border border-slate-850 text-white rounded-lg px-2 py-1 text-xs focus:outline-none flex-1 max-w-[130px] h-8"
+                                            />
+                                            <button
+                                                onClick={() => handleRecordPayment(trip._id, quickPaymentDates[trip._id] || new Date().toISOString().split('T')[0])}
+                                                disabled={recordingPayment[trip._id]}
+                                                className="px-3 py-1 h-8 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded-lg text-xs transition-colors flex-1 shadow-lg shadow-emerald-500/20"
+                                            >
+                                                {recordingPayment[trip._id] ? 'Saving...' : 'Mark Paid'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

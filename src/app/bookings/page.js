@@ -125,9 +125,38 @@ const BookingCard = ({ booking, onViewDetails, activeTab, session }) => {
 };
 
 // Detail Modal Component
-const BookingDetailModal = ({ booking, onClose }) => {
+const BookingDetailModal = ({ booking, onClose, onRefresh }) => {
     const router = useRouter();
+    const [recordDate, setRecordDate] = useState(new Date().toISOString().split('T')[0]);
+    const [recording, setRecording] = useState(false);
+    const [recordError, setRecordError] = useState('');
+
     if (!booking) return null;
+
+    const handleRecordPayment = async () => {
+        setRecording(true);
+        setRecordError('');
+        try {
+            const res = await fetch(`/api/bookings/${booking._id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    payment_status: 'received',
+                    payment_date: recordDate,
+                }),
+            });
+            const json = await res.json();
+            if (!res.ok) {
+                throw new Error(json.error || 'Failed to update payment');
+            }
+            if (onRefresh) onRefresh();
+            onClose();
+        } catch (err) {
+            setRecordError(err.message);
+        } finally {
+            setRecording(false);
+        }
+    };
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
@@ -211,7 +240,33 @@ const BookingDetailModal = ({ booking, onClose }) => {
                         <div className="grid grid-cols-2 gap-2 text-sm">
                             <div><span className="text-slate-500">Advance:</span> <span className="text-white">₹ {booking.advance_amount || 0}</span></div>
                             <div><span className="text-slate-500">Total:</span> <span className="text-white font-bold">₹ {booking.total_amount || 0}</span></div>
+                            <div><span className="text-slate-500">Payment Status:</span> <span className={`font-semibold ${booking.payment_status === 'pay_later' ? 'text-amber-400' : 'text-emerald-400'}`}>{booking.payment_status === 'pay_later' ? 'Pay Later' : 'Received'}</span></div>
+                            {booking.payment_status === 'received' && (
+                                <div><span className="text-slate-500">Payment Date:</span> <span className="text-white">{formatDate(booking.payment_date || booking.createdAt)}</span></div>
+                            )}
                         </div>
+
+                        {booking.payment_status === 'pay_later' && (
+                            <div className="mt-4 p-3 bg-slate-800/40 border border-slate-700 rounded-xl space-y-3">
+                                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Record Payment</div>
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="date"
+                                        value={recordDate}
+                                        onChange={(e) => setRecordDate(e.target.value)}
+                                        className="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    />
+                                    <button
+                                        onClick={handleRecordPayment}
+                                        disabled={recording}
+                                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 text-white rounded-lg text-xs font-medium transition-all"
+                                    >
+                                        {recording ? 'Saving...' : 'Mark Paid'}
+                                    </button>
+                                </div>
+                                {recordError && <div className="text-xs text-red-400 mt-1">{recordError}</div>}
+                            </div>
+                        )}
                     </div>
 
                     {/* Action Buttons */}
@@ -472,6 +527,7 @@ function BookingsContent() {
                 <BookingDetailModal
                     booking={selectedBooking}
                     onClose={() => setSelectedBooking(null)}
+                    onRefresh={fetchBookings}
                 />
             )}
 

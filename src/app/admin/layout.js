@@ -6,6 +6,7 @@ import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import NotificationBell from '@/components/ui/NotificationBell';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 // Grouped navigation hierarchy
 const SECTIONS = [
@@ -23,8 +24,8 @@ const SECTIONS = [
         items: [
             { href: '/admin/bookings', icon: CalendarCheck, label: 'Bookings' },
             { href: '/admin/trips', icon: Truck, label: 'Tour Trips' },
-            { href: '/admin/trip-sheets', icon: FileText, label: 'Trip Sheets' },
             { href: '/admin/nightly-service', icon: FileText, label: 'Nightly Services' },
+            { href: '/admin/trip-sheets', icon: FileText, label: 'Trip Sheets' },
             { href: '/admin/invoices', icon: FileText, label: 'Invoices' }
         ]
     },
@@ -138,13 +139,16 @@ export default function AdminLayout({ children }) {
     return (
         <div className="min-h-screen bg-slate-950 flex flex-col md:flex-row">
             {/* Mobile Header */}
-            <header className="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800 flex-shrink-0 z-20">
-                <div>
-                    <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-                        Admin Portal
-                    </h1>
-                </div>
-                <div className="flex items-center gap-4">
+            <header className="sticky top-0 md:hidden flex items-center justify-between p-4 bg-slate-900/95 backdrop-blur border-b border-slate-800 flex-shrink-0 z-20">
+                <Link href="/admin/summary" className="flex items-center gap-2">
+                    <img
+                        src="/logo.jpg"
+                        alt="ActivFleet Logo"
+                        className="h-8 w-auto rounded-lg object-contain"
+                    />
+                </Link>
+                <div className="flex items-center gap-3">
+                    <ThemeToggle />
                     <NotificationBell />
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -165,14 +169,15 @@ export default function AdminLayout({ children }) {
 
             {/* Sidebar */}
             <aside className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-slate-900 border-r border-slate-800 flex-shrink-0 flex flex-col z-40 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-                <div className="p-6 hidden md:block flex-shrink-0">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-                                Admin Portal
-                            </h1>
-                            <p className="text-xs text-slate-500 mt-1">ActivFleet</p>
-                        </div>
+                <div className="p-6 hidden md:block flex-shrink-0 border-b border-slate-800/60 mb-2">
+                    <div className="flex justify-between items-center">
+                        <Link href="/admin/summary" className="flex items-center">
+                            <img
+                                src="/logo.jpg"
+                                alt="ActivFleet Logo"
+                                className="h-10 w-auto rounded-lg object-contain"
+                            />
+                        </Link>
                         <NotificationBell align="left" />
                     </div>
                 </div>

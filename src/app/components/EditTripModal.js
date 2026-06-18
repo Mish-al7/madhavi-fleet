@@ -35,6 +35,8 @@ export default function EditTripModal({ trip, onClose, onUpdate }) {
         trip_route: '',
         actual_driver_name: '',
         income: '',
+        payment_status: 'received',
+        payment_date: '',
         fuel: '',
         fasttag: '',
         driver_allowance: '',
@@ -42,7 +44,6 @@ export default function EditTripModal({ trip, onClose, onUpdate }) {
         adblue: '',
         grease: '',
         air: '',
-        deposit_to_kdr_bank: '',
         other_expense: '',
         notes: '',
         bookingId: ''
@@ -55,7 +56,9 @@ export default function EditTripModal({ trip, onClose, onUpdate }) {
                 vehicle_id: trip.vehicle_id?._id || trip.vehicle_id || '',
                 trip_route: trip.trip_route || '',
                 actual_driver_name: trip.actual_driver_name || '',
-                income: trip.income || '',
+                income: trip.trip_income !== undefined ? trip.trip_income : (trip.income || ''),
+                payment_status: trip.payment_status || 'received',
+                payment_date: trip.payment_date ? new Date(trip.payment_date).toISOString().split('T')[0] : (trip.trip_date ? new Date(trip.trip_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]),
                 fuel: trip.fuel || '',
                 fasttag: trip.fasttag || '',
                 driver_allowance: trip.driver_allowance || '',
@@ -63,7 +66,6 @@ export default function EditTripModal({ trip, onClose, onUpdate }) {
                 adblue: trip.adblue || '',
                 grease: trip.grease || '',
                 air: trip.air || '',
-                deposit_to_kdr_bank: trip.deposit_to_kdr_bank || '',
                 other_expense: trip.other_expense || '',
                 notes: trip.notes || '',
                 bookingId: trip.bookingId || ''
@@ -98,7 +100,11 @@ export default function EditTripModal({ trip, onClose, onUpdate }) {
         setError('');
 
         try {
-            const submissionData = { ...formData };
+            const submissionData = {
+                ...formData,
+                payment_status: formData.payment_status || 'pay_later',
+                payment_date: formData.payment_status === 'pay_later' ? null : (formData.payment_date || new Date())
+            };
             if (!submissionData.bookingId) delete submissionData.bookingId;
 
             const res = await fetch(`/api/trips/${trip._id}`, {
@@ -127,7 +133,7 @@ export default function EditTripModal({ trip, onClose, onUpdate }) {
     const totalExpenses = [
         'fuel', 'fasttag', 'driver_allowance',
         'service', 'adblue', 'grease', 'air',
-        'deposit_to_kdr_bank', 'other_expense'
+        'other_expense'
     ].reduce((sum, field) => sum + (Number(formData[field]) || 0), 0);
 
     if (!trip) return null;
@@ -183,7 +189,7 @@ export default function EditTripModal({ trip, onClose, onUpdate }) {
                                     >
                                         <option value="" disabled>Select Vehicle</option>
                                         {vehicles.map(v => (
-                                            <option key={v._id} value={v._id}>{v.vehicle_no}{v.nickname ? ` - ${v.nickname}` : ''}</option>
+                                            <option key={v._id} value={v._id}>{v.vehicle_no} {v.vehicle_name ? `(${v.vehicle_name})` : ''}{v.nickname ? ` - ${v.nickname}` : ''}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -224,7 +230,6 @@ export default function EditTripModal({ trip, onClose, onUpdate }) {
                                 <InputGroup label="AdBlue" name="adblue" value={formData.adblue} onChange={handleChange} type="number" placeholder="0" />
                                 <InputGroup label="Grease" name="grease" value={formData.grease} onChange={handleChange} type="number" placeholder="0" />
                                 <InputGroup label="Air" name="air" value={formData.air} onChange={handleChange} type="number" placeholder="0" />
-                                <InputGroup label="Deposit to Bank" name="deposit_to_kdr_bank" value={formData.deposit_to_kdr_bank} onChange={handleChange} type="number" placeholder="0" />
                             </div>
 
                             <InputGroup label="Other Expenses" name="other_expense" value={formData.other_expense} onChange={handleChange} type="number" placeholder="0" />
@@ -244,6 +249,37 @@ export default function EditTripModal({ trip, onClose, onUpdate }) {
                                 placeholder="Add any additional notes here..."
                                 className="block w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all h-24 resize-none"
                             />
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-slate-800/30 p-3 rounded-xl border border-slate-700/50">
+                            <div className="flex items-center gap-2.5">
+                                <input
+                                    type="checkbox"
+                                    id="payment_status_checkbox"
+                                    name="payment_status"
+                                    checked={formData.payment_status === 'received'}
+                                    onChange={(e) => setFormData(prev => ({
+                                        ...prev,
+                                        payment_status: e.target.checked ? 'received' : 'pay_later'
+                                    }))}
+                                    className="w-5 h-5 rounded border-slate-700 bg-slate-800/50 text-blue-500 focus:ring-blue-500/50 focus:ring-2 cursor-pointer"
+                                />
+                                <label htmlFor="payment_status_checkbox" className="text-sm font-semibold text-slate-300 select-none cursor-pointer">
+                                    Payment Received
+                                </label>
+                            </div>
+                            {formData.payment_status === 'received' && (
+                                <div className="flex-1">
+                                    <InputGroup
+                                        label="Payment Date"
+                                        name="payment_date"
+                                        value={formData.payment_date}
+                                        onChange={handleChange}
+                                        type="date"
+                                        icon={Calendar}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <div className="pt-4 flex items-center gap-4">

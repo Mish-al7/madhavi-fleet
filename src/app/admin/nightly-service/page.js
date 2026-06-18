@@ -280,7 +280,7 @@ export default function NightlyServicesPage() {
                                 >
                                     <option value="" disabled>Select Vehicle</option>
                                     {vehicles.map(v => (
-                                        <option key={v._id} value={v._id}>{v.vehicle_no} {v.vehicle_name ? `(${v.vehicle_name})` : ''}</option>
+                                        <option key={v._id} value={v._id}>{v.vehicle_no} {v.vehicle_name ? `(${v.vehicle_name})` : ''}{v.nickname ? ` - ${v.nickname}` : ''}</option>
                                     ))}
                                 </select>
                             </div>
@@ -557,99 +557,187 @@ export default function NightlyServicesPage() {
                     <h3 className="text-lg font-bold text-white">Logged Nightly Services ({services.length})</h3>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-900/50 text-slate-400 text-xs uppercase tracking-wider whitespace-nowrap">
-                                <th className="p-4 border-b border-slate-800 font-semibold">Date / Vehicle</th>
-                                <th className="p-4 border-b border-slate-800 font-semibold">Route Details</th>
-                                <th className="p-4 border-b border-slate-800 font-semibold">Crew</th>
-                                <th className="p-4 border-b border-slate-800 text-right font-semibold">Income</th>
-                                <th className="p-4 border-b border-slate-800 text-right font-semibold">Expenses</th>
-                                <th className="p-4 border-b border-slate-800 text-right font-semibold">Net Profit</th>
-                                <th className="p-4 border-b border-slate-800 text-center font-semibold">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800 text-sm text-slate-300 whitespace-nowrap">
-                            {services.map(service => {
+                <div>
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-900/50 text-slate-400 text-xs uppercase tracking-wider whitespace-nowrap">
+                                    <th className="px-3 py-3 border-b border-slate-800 font-semibold">Date / Vehicle</th>
+                                    <th className="px-3 py-3 border-b border-slate-800 font-semibold">Route Details</th>
+                                    <th className="px-3 py-3 border-b border-slate-800 font-semibold">Crew</th>
+                                    <th className="px-3 py-3 border-b border-slate-800 text-right font-semibold">Income</th>
+                                    <th className="px-3 py-3 border-b border-slate-800 text-right font-semibold">Expenses</th>
+                                    <th className="px-3 py-3 border-b border-slate-800 text-right font-semibold">Net Profit</th>
+                                    <th className="px-3 py-3 border-b border-slate-800 text-center font-semibold">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800 text-sm text-slate-300 whitespace-nowrap">
+                                {services.map(service => {
+                                    const profit = (service.income || 0) - (service.total_expenses || 0);
+                                    return (
+                                        <tr key={service._id} className="hover:bg-slate-800/30 transition-colors">
+                                            <td className="px-3 py-3">
+                                                <div className="font-semibold text-white flex items-center gap-1.5">
+                                                    <Calendar size={13} className="text-slate-500" />
+                                                    {formatDate(service.trip_date)}
+                                                </div>
+                                                <div className="text-xs text-slate-400 flex items-center gap-1 mt-1 font-mono uppercase">
+                                                    <Truck size={12} className="text-slate-500" />
+                                                    {service.vehicle_id?.vehicle_no || 'Unknown'} {service.vehicle_id?.vehicle_name ? `(${service.vehicle_id.vehicle_name})` : ''}
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <div className="font-medium text-white flex items-center gap-1.5">
+                                                    <MapPin size={13} className="text-slate-500" />
+                                                    {service.route_id?.name || service.trip_route || 'Unknown Route'}
+                                                </div>
+                                                <div className="text-xs text-slate-500 mt-1">
+                                                    Seats occupied: <strong className="text-slate-300">{service.seats_filled || 0}</strong>
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <div className="flex items-center gap-1">
+                                                    <User size={13} className="text-slate-500" />
+                                                    <span>Dr: {service.actual_driver_name || service.driver_id?.name || 'Unknown'}</span>
+                                                </div>
+                                                <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                                                    <Users size={12} className="text-slate-500" />
+                                                    <span>Cl: {service.cleaner_name || '-'}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3 text-right">
+                                                <div className="text-emerald-400 font-bold font-mono">₹{(service.income || 0).toLocaleString()}</div>
+                                                <div className="text-[10px] text-slate-500 mt-0.5">
+                                                    Off: ₹{(service.office_offline_collection || 0).toLocaleString()} | On: ₹{(service.online_booking_collection || 0).toLocaleString()}
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3 text-right">
+                                                <div className="text-red-400 font-bold font-mono">₹{(service.total_expenses || 0).toLocaleString()}</div>
+                                                <div className="text-[10px] text-slate-500 mt-0.5">
+                                                    Fuel: ₹{(service.fuel || 0).toLocaleString()} | Toll: ₹{(service.toll || 0).toLocaleString()}
+                                                </div>
+                                            </td>
+                                            <td className={`px-3 py-3 text-right font-bold font-mono ${profit >= 0 ? 'text-blue-400' : 'text-rose-500'}`}>
+                                                {profit >= 0 ? '+' : ''}₹{profit.toLocaleString()}
+                                            </td>
+                                            <td className="px-3 py-3 text-center">
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    <button
+                                                        onClick={() => handleEdit(service)}
+                                                        className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-all"
+                                                        title="Edit Log"
+                                                    >
+                                                        <Edit2 size={15} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(service._id)}
+                                                        className="p-1.5 text-red-400/80 hover:text-red-400 hover:bg-red-500/10 rounded transition-all"
+                                                        title="Delete Log"
+                                                    >
+                                                        <Trash2 size={15} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+
+                                {services.length === 0 && (
+                                    <tr>
+                                        <td colSpan="7" className="text-center py-12 text-slate-500">
+                                            No nightly service entries logged yet. Click "Log Nightly Service" to log details.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Mobile Card List View */}
+                    <div className="md:hidden divide-y divide-slate-800">
+                        {services.length === 0 ? (
+                            <div className="text-center py-12 text-slate-500 p-4">
+                                No nightly service entries logged yet. Click "Log Nightly Service" to log details.
+                            </div>
+                        ) : (
+                            services.map(service => {
                                 const profit = (service.income || 0) - (service.total_expenses || 0);
                                 return (
-                                    <tr key={service._id} className="hover:bg-slate-800/30 transition-colors">
-                                        <td className="p-4">
-                                            <div className="font-semibold text-white flex items-center gap-1.5">
-                                                <Calendar size={13} className="text-slate-500" />
-                                                {formatDate(service.trip_date)}
+                                    <div key={service._id} className="p-4 space-y-3 bg-slate-900/50">
+                                        <div className="flex justify-between items-start">
+                                            <div className="space-y-1">
+                                                <div className="font-semibold text-white flex items-center gap-1.5 text-sm">
+                                                    <Calendar size={13} className="text-slate-500" />
+                                                    {formatDate(service.trip_date)}
+                                                </div>
+                                                <div className="text-xs text-slate-400 font-mono uppercase flex items-center gap-1">
+                                                    <Truck size={12} className="text-slate-500" />
+                                                    {service.vehicle_id?.vehicle_no || 'Unknown'}
+                                                </div>
                                             </div>
-                                            <div className="text-xs text-slate-400 flex items-center gap-1 mt-1 font-mono uppercase">
-                                                <Truck size={12} className="text-slate-500" />
-                                                {service.vehicle_id?.vehicle_no || 'Unknown'} {service.vehicle_id?.vehicle_name ? `(${service.vehicle_id.vehicle_name})` : ''}
+                                            <div className="bg-slate-800/80 border border-slate-700/50 text-[10px] px-2 py-0.5 rounded text-slate-300">
+                                                Seats: {service.seats_filled || 0}
                                             </div>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="font-medium text-white flex items-center gap-1.5">
-                                                <MapPin size={13} className="text-slate-500" />
-                                                {service.route_id?.name || service.trip_route || 'Unknown Route'}
-                                            </div>
-                                            <div className="text-xs text-slate-500 mt-1">
-                                                Seats occupied: <strong className="text-slate-300">{service.seats_filled || 0}</strong>
-                                            </div>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-1">
+                                        </div>
+
+                                        <div className="flex items-center gap-1.5 text-xs text-slate-300">
+                                            <MapPin size={13} className="text-slate-500" />
+                                            <span className="font-medium text-white">{service.route_id?.name || service.trip_route || 'Unknown Route'}</span>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2 text-xs border-t border-slate-800/40 pt-2">
+                                            <div className="flex items-center gap-1 text-slate-300">
                                                 <User size={13} className="text-slate-500" />
                                                 <span>Dr: {service.actual_driver_name || service.driver_id?.name || 'Unknown'}</span>
                                             </div>
-                                            <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                                            <div className="flex items-center gap-1 text-slate-300">
                                                 <Users size={12} className="text-slate-500" />
                                                 <span>Cl: {service.cleaner_name || '-'}</span>
                                             </div>
-                                        </td>
-                                        <td className="p-4 text-right">
-                                            <div className="text-emerald-400 font-bold font-mono">₹{(service.income || 0).toLocaleString()}</div>
-                                            <div className="text-[10px] text-slate-500 mt-0.5">
-                                                Off: ₹{(service.office_offline_collection || 0).toLocaleString()} | Gen: ₹{(service.online_booking_collection || 0).toLocaleString()}
-                                            </div>
-                                        </td>
-                                        <td className="p-4 text-right">
-                                            <div className="text-red-400 font-bold font-mono">₹{(service.total_expenses || 0).toLocaleString()}</div>
-                                            <div className="text-[10px] text-slate-500 mt-0.5">
-                                                Fuel: ₹{(service.fuel || 0).toLocaleString()} | Toll: ₹{(service.toll || 0).toLocaleString()}
-                                            </div>
-                                        </td>
-                                        <td className={`p-4 text-right font-bold font-mono ${profit >= 0 ? 'text-blue-400' : 'text-rose-500'}`}>
-                                            {profit >= 0 ? '+' : ''}₹{profit.toLocaleString()}
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            <div className="flex items-center justify-center gap-1.5">
-                                                <button
-                                                    onClick={() => handleEdit(service)}
-                                                    className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-all"
-                                                    title="Edit Log"
-                                                >
-                                                    <Edit2 size={15} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(service._id)}
-                                                    className="p-1.5 text-red-400/80 hover:text-red-400 hover:bg-red-500/10 rounded transition-all"
-                                                    title="Delete Log"
-                                                >
-                                                    <Trash2 size={15} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                                        </div>
 
-                            {services.length === 0 && (
-                                <tr>
-                                    <td colSpan="7" className="text-center py-12 text-slate-500">
-                                        No nightly service entries logged yet. Click "Log Nightly Service" to log details.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                        {/* Financial Breakdown Grid */}
+                                        <div className="grid grid-cols-3 gap-2 text-[10px] pt-1">
+                                            <div className="bg-slate-950 p-2 rounded border border-slate-800/60 space-y-0.5 text-center">
+                                                <span className="text-slate-500 block">Total Income</span>
+                                                <span className="font-semibold font-mono text-emerald-400">₹{(service.income || 0).toLocaleString()}</span>
+                                                <span className="text-[8px] text-slate-500 block truncate">Off:{service.office_offline_collection || 0}|On:{service.online_booking_collection || 0}</span>
+                                            </div>
+                                            <div className="bg-slate-950 p-2 rounded border border-slate-800/60 space-y-0.5 text-center">
+                                                <span className="text-slate-500 block">Total Expenses</span>
+                                                <span className="font-semibold font-mono text-red-400">₹{(service.total_expenses || 0).toLocaleString()}</span>
+                                                <span className="text-[8px] text-slate-500 block truncate">Fuel:{service.fuel || 0}|Toll:{service.toll || 0}</span>
+                                            </div>
+                                            <div className="bg-slate-950 p-2 rounded border border-slate-800/60 space-y-0.5 text-center">
+                                                <span className="text-slate-500 block">Net Profit</span>
+                                                <span className={`font-semibold font-mono ${profit >= 0 ? 'text-blue-400' : 'text-rose-500'}`}>
+                                                    {profit >= 0 ? '+' : ''}₹{profit.toLocaleString()}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-2 border-t border-slate-800/60 flex justify-end gap-2">
+                                            <button
+                                                onClick={() => handleEdit(service)}
+                                                className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-all"
+                                                title="Edit Log"
+                                            >
+                                                <Edit2 size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(service._id)}
+                                                className="p-1.5 text-red-400/80 hover:text-red-400 hover:bg-red-500/10 rounded transition-all"
+                                                title="Delete Log"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )
+                            })
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

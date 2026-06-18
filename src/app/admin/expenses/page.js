@@ -203,7 +203,7 @@ export default function ExpensesPage() {
                     <option value="">All Vehicles</option>
                     <option value="null">Company Level (No Vehicle)</option>
                     {vehicles.map(v => (
-                        <option key={v._id} value={v._id}>{v.vehicle_no || v.registration_number}</option>
+                        <option key={v._id} value={v._id}>{(v.vehicle_no || v.registration_number)} {v.vehicle_name ? `(${v.vehicle_name})` : ''}{v.nickname ? ` - ${v.nickname}` : ''}</option>
                     ))}
                 </select>
 
@@ -222,46 +222,47 @@ export default function ExpensesPage() {
             </div>
 
             {/* Expenses Table */}
-            <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-                <div className="overflow-x-auto">
+            <div>
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-950 border-b border-slate-800 text-slate-400 text-sm uppercase">
-                                <th className="p-4 font-medium">Date</th>
-                                <th className="p-4 font-medium">Type / Description</th>
-                                <th className="p-4 font-medium">Vehicle</th>
-                                <th className="p-4 font-medium">Amount</th>
-                                <th className="p-4 font-medium">Frequency</th>
-                                <th className="p-4 font-medium">Status</th>
-                                <th className="p-4 font-medium text-right">Actions</th>
+                            <tr className="bg-slate-950 border-b border-slate-800 text-slate-400 text-sm uppercase whitespace-nowrap">
+                                <th className="px-3 py-3 font-medium">Date</th>
+                                <th className="px-3 py-3 font-medium">Type / Description</th>
+                                <th className="px-3 py-3 font-medium">Vehicle</th>
+                                <th className="px-3 py-3 font-medium">Amount</th>
+                                <th className="px-3 py-3 font-medium">Frequency</th>
+                                <th className="px-3 py-3 font-medium">Status</th>
+                                <th className="px-3 py-3 font-medium text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="7" className="p-8 text-center text-slate-500">Loading...</td>
+                                    <td colSpan="7" className="p-4 text-center text-slate-500">Loading...</td>
                                 </tr>
                             ) : filteredExpenses.length === 0 ? (
                                 <tr>
-                                    <td colSpan="7" className="p-8 text-center text-slate-500">
+                                    <td colSpan="7" className="p-4 text-center text-slate-500">
                                         No {activeTab === 'payments' ? 'payments' : 'recurring expenses'} found.
                                     </td>
                                 </tr>
                             ) : (
                                 filteredExpenses.map(expense => (
                                     <tr key={expense._id} className="group hover:bg-slate-800/30 transition-colors">
-                                        <td className="p-4 text-slate-300 whitespace-nowrap">
+                                        <td className="px-3 py-3 text-slate-300 whitespace-nowrap">
                                             {new Date(expense.start_date).toLocaleDateString('en-GB')}
                                         </td>
-                                        <td className="p-4">
+                                        <td className="px-3 py-3">
                                             <div className="flex flex-col">
                                                 <span className="text-white font-medium">{expense.expense_type}</span>
                                                 <span className="text-slate-500 text-xs">{expense.description}</span>
                                             </div>
                                         </td>
-                                        <td className="p-4 text-slate-300">
+                                        <td className="px-3 py-3 text-slate-300 whitespace-nowrap">
                                             {expense.vehicle_id ? (
-                                                <span className="inline-flex items-center gap-1 bg-slate-800 px-2 py-1 rounded text-xs text-blue-300 border border-blue-500/20">
+                                                <span className="inline-flex items-center gap-1 bg-slate-800 px-2 py-1 rounded text-xs text-blue-300 border border-blue-500/20 whitespace-nowrap">
                                                     <Truck size={12} />
                                                     {expense.vehicle_id.vehicle_no || 'Unknown'}
                                                 </span>
@@ -269,10 +270,10 @@ export default function ExpensesPage() {
                                                 <span className="text-slate-600 text-xs italic">Company Level</span>
                                             )}
                                         </td>
-                                        <td className="p-4 font-bold text-white">
+                                        <td className="px-3 py-3 font-bold text-white whitespace-nowrap">
                                             ₹{expense.amount.toLocaleString()}
                                         </td>
-                                        <td className="p-4">
+                                        <td className="px-3 py-3 whitespace-nowrap">
                                             <span className={`text-xs px-2 py-1 rounded-full border ${expense.frequency === 'One-time'
                                                 ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
                                                 : 'bg-orange-500/10 text-orange-400 border-orange-500/20'
@@ -280,7 +281,7 @@ export default function ExpensesPage() {
                                                 {expense.frequency}
                                             </span>
                                         </td>
-                                        <td className="p-4">
+                                        <td className="px-3 py-3 whitespace-nowrap">
                                             <span className={`text-xs px-2 py-1 rounded-full font-bold uppercase ${expense.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400' :
                                                 expense.status === 'Paused' ? 'bg-yellow-500/10 text-yellow-400' :
                                                     'bg-slate-700 text-slate-400'
@@ -288,7 +289,7 @@ export default function ExpensesPage() {
                                                 {expense.status}
                                             </span>
                                         </td>
-                                        <td className="p-4 text-right">
+                                        <td className="px-3 py-3 text-right whitespace-nowrap">
                                             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button
                                                     onClick={() => { setEditingExpense(expense); setShowModal(true); }}
@@ -311,6 +312,83 @@ export default function ExpensesPage() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card List View */}
+                <div className="md:hidden divide-y divide-slate-800">
+                    {loading ? (
+                        <div className="p-8 text-center text-slate-500">Loading...</div>
+                    ) : filteredExpenses.length === 0 ? (
+                        <div className="p-8 text-center text-slate-500">
+                            No {activeTab === 'payments' ? 'payments' : 'recurring expenses'} found.
+                        </div>
+                    ) : (
+                        filteredExpenses.map(expense => (
+                            <div key={expense._id} className="p-4 space-y-3 bg-slate-900/50">
+                                <div className="flex justify-between items-center">
+                                    <span className="font-mono text-xs text-slate-400">
+                                        {new Date(expense.start_date).toLocaleDateString('en-GB')}
+                                    </span>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${expense.frequency === 'One-time'
+                                            ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                                            : 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+                                            }`}>
+                                            {expense.frequency}
+                                        </span>
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${expense.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400' :
+                                            expense.status === 'Paused' ? 'bg-yellow-500/10 text-yellow-400' :
+                                                'bg-slate-700 text-slate-400'
+                                            }`}>
+                                            {expense.status}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <span className="text-white font-medium text-sm block">{expense.expense_type}</span>
+                                    {expense.description && (
+                                        <span className="text-slate-400 text-xs block leading-relaxed">{expense.description}</span>
+                                    )}
+                                </div>
+
+                                <div className="flex justify-between items-center pt-2 border-t border-slate-800/60">
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] text-slate-500 block">Scope / Vehicle</span>
+                                        {expense.vehicle_id ? (
+                                            <span className="inline-flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded text-xs text-blue-300 border border-blue-500/20 font-mono uppercase">
+                                                <Truck size={10} />
+                                                {expense.vehicle_id.vehicle_no || 'Unknown'}
+                                            </span>
+                                        ) : (
+                                            <span className="text-slate-500 text-xs italic">Company Level</span>
+                                        )}
+                                    </div>
+                                    <div className="text-right space-y-1">
+                                        <span className="text-[10px] text-slate-500 block">Amount</span>
+                                        <span className="font-bold text-white text-sm">₹{expense.amount.toLocaleString()}</span>
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 border-t border-slate-800/60 flex justify-end gap-2">
+                                    <button
+                                        onClick={() => { setEditingExpense(expense); setShowModal(true); }}
+                                        className="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                                        title="Edit"
+                                    >
+                                        <Edit2 size={15} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(expense._id)}
+                                        className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                        title="Delete"
+                                    >
+                                        <Trash2 size={15} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
 

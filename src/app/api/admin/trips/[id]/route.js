@@ -45,19 +45,21 @@ export async function PUT(req, { params }) {
         // Strip client-sent company_id
         delete body.company_id;
 
-        // Verify company ownership and correct type
-        const existing = await Trip.findOne({ _id: id, company_id, trip_type: 'regular' });
-        if (!existing) {
+        const trip = await Trip.findOne({ _id: id, company_id, trip_type: 'regular' });
+        if (!trip) {
             return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
         }
 
-        const updated = await Trip.findOneAndUpdate(
-            { _id: id, company_id, trip_type: 'regular' },
-            body,
-            { new: true, runValidators: true }
-        );
+        // Update fields
+        Object.keys(body).forEach(key => {
+            if (key !== '_id' && key !== 'createdAt' && key !== 'updatedAt' && key !== 'company_id') {
+                trip[key] = body[key];
+            }
+        });
 
-        return NextResponse.json(updated);
+        await trip.save();
+
+        return NextResponse.json(trip);
     } catch (error) {
         return NextResponse.json({ error: error.message }, { status: 400 });
     }

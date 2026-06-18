@@ -49,3 +49,37 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
   cursor: pointer;
 }
+
+/* Premium Light Mode system overrides */
+.light {
+  --color-slate-50: #0f172a;
+  --color-slate-100: #0f172a;
+  --color-slate-200: #1e293b;
+  --color-slate-300: #334155;
+  --color-slate-400: #475569;
+  --color-slate-500: #64748b;
+  --color-slate-600: #cbd5e1;
+  --color-slate-700: #e2e8f0;
+  --color-slate-800: #f1f5f9;
+  --color-slate-900: #ffffff;
+  --color-slate-950: #f8fafc;
+}
+
+/* Reset calendar indicators for visibility in light mode */
+.light input[type="date"]::-webkit-calendar-picker-indicator,
+.light input[type="month"]::-webkit-calendar-picker-indicator,
+.light input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0);
+}
+
+/* Dynamic text-white override for light mode (excluding buttons/badges with solid colored backgrounds) */
+.light :not([class*="bg-blue-"]):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-purple-"]):not([class*="bg-indigo-"]):not([class*="bg-rose-"]):not([class*="bg-amber-"]):not([class*="bg-green-"]):not([class*="bg-yellow-"]):not([class*="bg-teal-"]):not([class*="bg-sky-"]):not([class*="bg-violet-"]).text-white {
+  color: var(--color-slate-100) !important;
+}
+
+/* Dynamic hover/focus/active:text-white override for light mode */
+.light :not([class*="bg-blue-"]):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-purple-"]):not([class*="bg-indigo-"]):not([class*="bg-rose-"]):not([class*="bg-amber-"]):not([class*="bg-green-"]):not([class*="bg-yellow-"]):not([class*="bg-teal-"]):not([class*="bg-sky-"]):not([class*="bg-violet-"]).hover\:text-white:hover,
+.light :not([class*="bg-blue-"]):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-purple-"]):not([class*="bg-indigo-"]):not([class*="bg-rose-"]):not([class*="bg-amber-"]):not([class*="bg-green-"]):not([class*="bg-yellow-"]):not([class*="bg-teal-"]):not([class*="bg-sky-"]):not([class*="bg-violet-"]).focus\:text-white:focus,
+.light :not([class*="bg-blue-"]):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="bg-purple-"]):not([class*="bg-indigo-"]):not([class*="bg-rose-"]):not([class*="bg-amber-"]):not([class*="bg-green-"]):not([class*="bg-yellow-"]):not([class*="bg-teal-"]):not([class*="bg-sky-"]):not([class*="bg-violet-"]).active\:text-white:active {
+  color: var(--color-slate-100) !important;
+}

@@ -175,6 +175,27 @@ export async function GET(request, { params }) {
 
         currentY += rowHeight + 10;
 
+        // Payment status and date row
+        doc.rect(startX, currentY, amountLabelW, rowHeight).stroke();
+        doc.font('Helvetica-Bold').text('PAYMENT STATUS', startX + 5, currentY + 10);
+
+        doc.rect(startX + amountLabelW, currentY, amountValW, rowHeight).stroke();
+        const payStatusText = booking.payment_status === 'pay_later' ? 'PAY LATER' : 'RECEIVED';
+        doc.text(payStatusText, startX + amountLabelW + 5, currentY + 10);
+
+        doc.rect(rightStartX, currentY, amountLabelW, rowHeight).stroke();
+        doc.font('Helvetica-Bold').text('PAYMENT DATE', rightStartX + 5, currentY + 10);
+
+        doc.rect(rightStartX + amountLabelW, currentY, amountValW, rowHeight).stroke();
+        if (booking.payment_status === 'received') {
+            const payDateStr = formatDate(booking.payment_date || booking.createdAt);
+            doc.text(payDateStr, rightStartX + amountLabelW + 5, currentY + 10);
+        } else {
+            doc.text('-', rightStartX + amountLabelW + 5, currentY + 10);
+        }
+
+        currentY += rowHeight + 10;
+
         // Other Expenses & Accommodation
         drawRow(currentY, 'Other Expenses', booking.other_expenses || '-');
         currentY += rowHeight;

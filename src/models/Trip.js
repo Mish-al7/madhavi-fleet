@@ -39,6 +39,15 @@ const TripSchema = new mongoose.Schema({
         default: 0,
         min: 0,
     },
+    payment_status: {
+        type: String,
+        enum: ['received', 'pay_later'],
+        default: 'pay_later',
+    },
+    payment_date: {
+        type: Date,
+        required: false,
+    },
 
     // Expenses
     fuel: { type: Number, default: 0, min: 0 },
@@ -51,7 +60,6 @@ const TripSchema = new mongoose.Schema({
     grease: { type: Number, default: 0, min: 0 },
     air: { type: Number, default: 0, min: 0 },
 
-    deposit_to_kdr_bank: { type: Number, default: 0, min: 0 },
     other_expense: { type: Number, default: 0, min: 0 },
 
     total_expenses: {
@@ -136,6 +144,10 @@ TripSchema.pre('validate', function () {
         this.month = `${yyyy}-${mm}`;
     }
 
+    if (this.payment_status === 'received' && !this.payment_date) {
+        this.payment_date = this.trip_date || new Date();
+    }
+
     if (this.trip_type === 'nightly') {
         // Nightly Service calculations
         this.income = (this.office_offline_collection || 0) + (this.online_booking_collection || 0);
@@ -152,11 +164,11 @@ TripSchema.pre('validate', function () {
             (this.fuel || 0) +
             (this.fasttag || 0) +
             (this.driver_allowance || 0) +
+            (this.cleaner_payment || 0) +
             (this.service || 0) +
             (this.adblue || 0) +
             (this.grease || 0) +
             (this.air || 0) +
-            (this.deposit_to_kdr_bank || 0) +
             (this.other_expense || 0)
         );
     }
@@ -165,5 +177,9 @@ TripSchema.pre('validate', function () {
 // Add compound index for ledger querying
 TripSchema.index({ company_id: 1, vehicle_id: 1, trip_date: 1 });
 TripSchema.index({ company_id: 1, driver_id: 1 });
+
+if (process.env.NODE_ENV === 'development') {
+    delete mongoose.models.Trip;
+}
 
 export default mongoose.models.Trip || mongoose.model('Trip', TripSchema);
