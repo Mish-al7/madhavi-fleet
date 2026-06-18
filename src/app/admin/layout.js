@@ -195,7 +195,7 @@ export default function AdminLayout({ children }) {
                     </button>
                 </div>
 
-                <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-3 flex flex-col gap-0 scrollbar-hide">
+                <nav className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-3 flex flex-col gap-0 scrollbar-hide">
                     {SECTIONS.map((section) => {
                         const isOpen = !!openSections[section.id];
                         const hasActiveChild = section.items.some(item => pathname === item.href || (item.href !== '/admin/summary' && pathname.startsWith(item.href)));
