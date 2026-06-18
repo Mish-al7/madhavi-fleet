@@ -9,7 +9,7 @@ import { formatDate } from '@/lib/dateUtils';
 import { useRouter, useSearchParams } from 'next/navigation';
 import NotificationBell from '@/components/ui/NotificationBell';
 
-// Status Badge Component
+// Status Badge Components
 const StatusBadge = ({ status }) => {
     const styles = {
         pending: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
@@ -39,7 +39,7 @@ const BookingCard = ({ booking, onViewDetails, activeTab, session }) => {
 
     const userId = session?.user?.id;
     const isMine = creatorId === userId;
-    
+
     // Defensive check for driver_id as string or populated object
     const bookingDriverId = booking.driver_id?._id || booking.driver_id;
     const isAssignedToMe = userId && bookingDriverId && bookingDriverId.toString() === userId.toString();
@@ -111,7 +111,7 @@ const BookingCard = ({ booking, onViewDetails, activeTab, session }) => {
                     </div>
                 )}
 
-                {( !isOverview || isAssignedToMe) && (
+                {(!isOverview || isAssignedToMe) && (
                     <button
                         onClick={() => onViewDetails(booking)}
                         className="text-blue-400 text-xs font-medium hover:text-blue-300 flex items-center gap-1"
@@ -273,7 +273,7 @@ const BookingDetailModal = ({ booking, onClose, onRefresh }) => {
                     <div className="flex gap-4 pt-4 border-t border-slate-800">
                         {booking.status === 'approved' && (
                             <>
-                                {new Date().setHours(0,0,0,0) >= new Date(booking.journey_return_date).setHours(0,0,0,0) ? (
+                                {new Date().setHours(0, 0, 0, 0) >= new Date(booking.journey_return_date).setHours(0, 0, 0, 0) ? (
                                     <button
                                         onClick={() => {
                                             const params = new URLSearchParams({
