@@ -249,11 +249,10 @@ BookingSchema.statics.checkVehicleAvailability = async function (vehicleId, star
 };
 
 // Pre-save hook to populate payment_date if payment_status is received
-BookingSchema.pre('save', function (next) {
+BookingSchema.pre('save', function () {
     if (this.payment_status === 'received' && !this.payment_date) {
         this.payment_date = this.booking_date || new Date();
     }
-    next();
 });
 
 // Force model re-registration in development to pick up schema changes
